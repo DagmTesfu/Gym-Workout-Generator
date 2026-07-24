@@ -10,7 +10,7 @@ const workouts = [
 {
     name: "Bench Press",
     target: "Chest and Triceps",
-    goal: "Strength",
+    goal: ["Strength"],
     difficulty: ["Intermediate"],
     sets: 3,
     reps: 8
@@ -18,7 +18,7 @@ const workouts = [
 {
     name: "Incline Bench Press",
     target: "Chest",
-    goal: "Strength and Muscle",
+    goal: ["Strength", "muscle"],
     difficulty: ["Intermediate"],
     sets: 3,
     reps: 10
@@ -26,7 +26,7 @@ const workouts = [
 {
     name: "Dips",
     target: "Chest and Triceps",
-    goal: "Strength and Muscle",
+    goal: ["Strength", "muscle"],
     difficulty: ["Intermediate"],
     sets: 3,
     reps: 8
@@ -34,15 +34,7 @@ const workouts = [
 {
     name: "Cable Fly",
     target: "Chest",
-    goal: "Muscle",
-    difficulty: ["Beginner"],
-    sets: 3,
-    reps: 12
-},
-{
-    name: "Lat Pulldown",
-    target: "Back(Lat Muscle)",
-    goal: "Muscle",
+    goal: ["muscle"],
     difficulty: ["Beginner"],
     sets: 3,
     reps: 12
@@ -50,36 +42,19 @@ const workouts = [
 {
     name: "Pull-Up",
     target: "Back(Lat)",
-    goal: "Muscle",
+    goal: ["muscle"],
     difficulty: ["Intermediate"],
     sets: 3,
     reps: 6
 },
 {
-    name: "Chest Suported Row",
+    name: "Chest-Supported Row",
     target: "Back",
-    goal: "Muscle",
+    goal: ["muscle"],
     difficulty: ["Beginner"],
     sets: 3,
     reps: 12
 },
-{
-    name: "Push-ups",
-    target: "Ches and Triceps",
-    goal: "Strength and Muscle",
-    difficulty: ["Beginner"],
-    sets: 3,
-    reps: 10
-},
-{
-    name: "Push-ups",
-    target: "Ches and Triceps",
-    goal: "Strength and Muscle",
-    difficulty: ["Beginner"],
-    sets: 3,
-    reps: 10
-},
-
 {
     name: "Lat Pulldown",
     target: "Back",
@@ -658,3 +633,223 @@ const workouts = [
 },
 
 ];
+
+
+const exerciseImages = {
+  "Push-ups": "assets/exercises/push-ups.jpg",
+  "Bench Press": "assets/exercises/bench-press.jpg",
+  "Incline Bench Press": "assets/exercises/incline-bench-press.jpg",
+  "Dips": "assets/exercises/dips.jpg",
+  "Cable Fly": "assets/exercises/cable-fly.jpg",
+  "Pull-Up": "assets/exercises/pull-up.jpg",
+  "Chest-Supported Row": "assets/exercises/chest-suported-row.jpg",
+  "Lat Pulldown": "assets/exercises/lat-pulldown.jpg",
+  "Seated Cable Row": "assets/exercises/seated-cable-row.jpg",
+  "Barbell Bent-Over Row": "assets/exercises/barbell-bent-over-row.jpg",
+  "One-Arm Dumbbell Row": "assets/exercises/one-arm-dumbbell-row.jpg",
+  "Chest-Supported Dumbbell Row": "assets/exercises/chest-supported-dumbbell-row.jpg",
+  "Assisted Pull-Up": "assets/exercises/assisted-pull-up.jpg",
+  "T-Bar Row": "assets/exercises/t-bar-row.jpg",
+  "Straight-Arm Cable Pulldown": "assets/exercises/straight-arm-cable-pulldown.jpg",
+  "Barbell Bench Press": "assets/exercises/barbell-bench-press.jpg",
+  "Dumbbell Bench Press": "assets/exercises/dumbbell-bench-press.jpg",
+  "Incline Barbell Bench Press": "assets/exercises/incline-barbell-bench-press.png",
+  "Incline Dumbbell Press": "assets/exercises/incline-dumbbell-press.jpg",
+  "Chest Press Machine": "assets/exercises/chest-press-machine.jpg",
+  "Pec Deck Fly": "assets/exercises/pec-deck-fly.jpg",
+  "Cable Chest Fly": "assets/exercises/cable-chest-fly.jpg",
+  "Dumbbell Chest Fly": "assets/exercises/dumbbell-chest-fly.jpg",
+  "Dumbbell Shoulder Press": "assets/exercises/dumbbell-shoulder-press.jpg",
+  "Barbell Overhead Press": "assets/exercises/barbell-overhead-press.jpg",
+  "Shoulder Press Machine": "assets/exercises/shoulder-press-machine.jpg",
+  "Dumbbell Lateral Raise": "assets/exercises/dumbbell-lateral-raise.jpg",
+  "Cable Lateral Raise": "assets/exercises/cable-lateral-raise.jpg",
+  "Rear Delt Fly Machine": "assets/exercises/rear-delt-fly-machine.jpg",
+  "Dumbbell Rear Delt Fly": "assets/exercises/dumbbell-rear-delt-fly.jpg",
+  "Cable Face Pull": "assets/exercises/cable-face-pull.jpg",
+  "Barbell Curl": "assets/exercises/barbell-curl.jpg",
+  "Dumbbell Curl": "assets/exercises/dumbbell-curl.jpg",
+  "Hammer Curl": "assets/exercises/hammer-curl.jpg",
+  "EZ-Bar Curl": "assets/exercises/ez-bar-curl.jpg",
+  "Preacher Curl Machine": "assets/exercises/preacher-curl-machine.jpg",
+  "Cable Curl": "assets/exercises/cable-curl.jpg",
+  "Incline Dumbbell Curl": "assets/exercises/incline-dumbbell-curl.jpg",
+  "Concentration Curl": "assets/exercises/concentration-curl.jpg",
+  "Cable Triceps Pushdown": "assets/exercises/cable-triceps-pushdown.jpg",
+  "Rope Triceps Pushdown": "assets/exercises/rope-triceps-pushdown.jpg",
+  "Overhead Cable Triceps Extension": "assets/exercises/overhead-cable-triceps-extension.jpg",
+  "Dumbbell Overhead Triceps Extension": "assets/exercises/dumbbell-overhead-triceps-extension.jpg",
+  "Skull Crushers": "assets/exercises/skull-crushers.jpg",
+  "Close-Grip Bench Press": "assets/exercises/close-grip-bench-press.jpg",
+  "Assisted Dip Machine": "assets/exercises/assisted-dip-machine.jpg",
+  "Triceps Extension Machine": "assets/exercises/triceps-extension-machine.jpg",
+  "Barbell Back Squat": "assets/exercises/barbell-back-squat.jpg",
+  "Front Squat": "assets/exercises/front-squat.jpg",
+  "Leg Press": "assets/exercises/leg-press.jpg",
+  "Hack Squat Machine": "assets/exercises/hack-squat-machine.jpg",
+  "Leg Extension Machine": "assets/exercises/leg-extension-machine.jpg",
+  "Dumbbell Goblet Squat": "assets/exercises/dumbbell-goblet-squat.jpg",
+  "Bulgarian Split Squat": "assets/exercises/bulgarian-split-squat.jpg",
+  "Dumbbell Walking Lunge": "assets/exercises/dumbbell-walking-lunge.jpg",
+  "Romanian Deadlift": "assets/exercises/romanian-deadlift.jpg",
+  "Barbell Stiff-Leg Deadlift": "assets/exercises/barbell-stiff-leg-deadlift.jpg",
+  "Dumbbell Romanian Deadlift": "assets/exercises/dumbbell-romanian-deadlift.jpg",
+  "Lying Leg Curl Machine": "assets/exercises/lying-leg-curl-machine.jpg",
+  "Seated Leg Curl Machine": "assets/exercises/seated-leg-curl-machine.jpg",
+  "Good Morning": "assets/exercises/good-morning.jpg",
+  "Single-Leg Romanian Deadlift": "assets/exercises/single-leg-romanian-deadlift.png",
+  "Cable Pull-Through": "assets/exercises/cable-pull-through.jpg",
+  "Barbell Hip Thrust": "assets/exercises/barbell-hip-thrust.jpg",
+  "Smith Machine Hip Thrust": "assets/exercises/smith-machine-hip-thrust.jpg",
+  "Dumbbell Hip Thrust": "assets/exercises/dumbbell-hip-thrust.png",
+  "Cable Glute Kickback": "assets/exercises/cable-glute-kickback.jpg",
+  "Sumo Deadlift": "assets/exercises/sumo-deadlift.jpg",
+  "Reverse Lunge": "assets/exercises/reverse-lunge.jpg",
+  "Hip Abduction Machine": "assets/exercises/hip-abduction-machine.jpg",
+  "Standing Calf Raise Machine": "assets/exercises/standing-calf-raise-machine.jpg",
+  "Seated Calf Raise Machine": "assets/exercises/seated-calf-raise-machine.jpg",
+  "Leg Press Calf Raise": "assets/exercises/leg-press-calf-raise.jpg",
+  "Smith Machine Calf Raise": "assets/exercises/smith-machine-calf-raise.jpg",
+  "Dumbbell Standing Calf Raise": "assets/exercises/dumbbell-standing-calf-raise.jpg",
+  "Single-Leg Calf Raise": "assets/exercises/single-leg-calf-raise.jpg",
+  "Donkey Calf Raise Machine": "assets/exercises/donkey-calf-raise-machine.jpg",
+  "Seated Dumbbell Calf Raise": "assets/exercises/seated-dumbbell-calf-raise.jpg"
+};
+
+
+const goalSelect = document.getElementById("goal");
+const bodyAreaSelect = document.getElementById("bodyArea");
+const difficultySelect = document.getElementById("difficulty");
+
+const generateButton = document.getElementById("generateButton");
+const clearButton = document.getElementById("clearButton");
+
+const workoutList = document.getElementById("workoutList");
+const errorMessage = document.getElementById("errorMessage");
+const workoutAnimation = document.getElementById("workoutAnimation");
+const workoutResults = document.getElementById("workoutResults");
+
+
+function playWorkoutAnimation() {
+  generateButton.classList.add("is-working");
+  workoutAnimation.classList.remove("is-active");
+  void workoutAnimation.offsetWidth;
+  workoutAnimation.classList.add("is-active");
+
+  setTimeout(function () {
+    generateButton.classList.remove("is-working");
+    workoutAnimation.classList.remove("is-active");
+  }, 750);
+}
+
+
+function generateWorkout(){
+    const selectedGoal = goalSelect.value;
+    const selectedBodyArea = bodyAreaSelect.value;
+    const selectedDifficulty = difficultySelect.value;
+
+    //Validation
+
+    if(
+    selectedGoal === "" ||
+    selectedBodyArea ===""||
+    selectedDifficulty === ""
+    ){
+    errorMessage.textContent = "Please select all three options";
+    workoutList.innerHTML = "";
+    return;
+
+    }
+
+    errorMessage.textContent = "";
+    playWorkoutAnimation();
+
+    const filteredWorkouts = workouts.filter(function (workout) {
+      return (
+        workout.goal.includes(selectedGoal) &&
+        workout.target.includes(selectedBodyArea) &&
+        workout.difficulty.includes(selectedDifficulty)
+      );
+    });
+
+    displayWorkout(filteredWorkouts);
+    console.log(filteredWorkouts);
+
+    setTimeout(function () {
+      workoutResults.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 500);
+}
+
+
+function displayWorkout(workouts) {
+  workoutList.innerHTML = "";
+
+  if (workouts.length === 0) {
+    workoutList.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">!</span>
+        <div>
+          <strong>No exact match this time.</strong>
+          <p>Try changing your goal, body area, or experience level.</p>
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+  workouts.forEach(function (workout, index) {
+    const imagePath = exerciseImages[workout.name];
+
+    workoutList.innerHTML += `
+      <article class="exercise-card" style="animation-delay: ${index * 55}ms">
+        <div class="exercise-visual">
+          <img
+            src="${imagePath}"
+            alt="${workout.name} exercise demonstration"
+            loading="lazy"
+            decoding="async"
+          >
+          <span class="exercise-number">${String(index + 1).padStart(2, "0")}</span>
+        </div>
+
+        <div class="exercise-content">
+          <span class="exercise-target">${workout.target}</span>
+          <h3>${workout.name}</h3>
+
+          <div class="exercise-prescription">
+            <div><strong>${workout.sets}</strong><span>Sets</span></div>
+            <div><strong>${workout.reps}</strong><span>Reps</span></div>
+          </div>
+
+          <div class="exercise-meta">
+            <span>${workout.difficulty.join(", ")}</span>
+            <span>${workout.goal.join(" · ")}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  });
+}
+
+
+function clearWorkout() {
+  goalSelect.value = "";
+  bodyAreaSelect.value = "";
+  difficultySelect.value = "";
+
+  errorMessage.textContent = "";
+
+  workoutList.innerHTML = `
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">↗</span>
+      <div>
+        <strong>Your session starts here.</strong>
+        <p>Select your preferences above to generate a focused workout.</p>
+      </div>
+    </div>
+  `;
+}
+
+generateButton.addEventListener("click", generateWorkout);
+clearButton.addEventListener("click", clearWorkout);
