@@ -181,7 +181,7 @@ h1 span {
   position: relative;
   min-height: 540px;
   overflow: hidden;
-  background: var(--dark) url("assets/exercise-sprite.png") center / cover no-repeat;
+  background: var(--dark) url("assets/exercise-sprite-web.jpg") center / cover no-repeat;
   border-radius: var(--radius-lg);
   box-shadow: 0 28px 70px rgba(17, 19, 15, 0.2);
 }

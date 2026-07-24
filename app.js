@@ -799,7 +799,9 @@ function displayWorkout(workouts) {
   }
 
   workouts.forEach(function (workout, index) {
-    const imagePath = exerciseImages[workout.name];
+    const imagePath = exerciseImages[workout.name]
+      .replace("assets/exercises/", "assets/exercises-web/")
+      .replace(/\.(jpg|png)$/, ".jpg");
 
     workoutList.innerHTML += `
       <article class="exercise-card" style="animation-delay: ${index * 55}ms">
@@ -807,7 +809,8 @@ function displayWorkout(workouts) {
           <img
             src="${imagePath}"
             alt="${workout.name} exercise demonstration"
-            loading="lazy"
+            loading="${index < 3 ? "eager" : "lazy"}"
+            fetchpriority="${index < 3 ? "high" : "low"}"
             decoding="async"
           >
           <span class="exercise-number">${String(index + 1).padStart(2, "0")}</span>
