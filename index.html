@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Workout Picker/title>
+  <title>Workout Picker</title>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -16,7 +16,7 @@
         <span class="brand-mark">F</span>
         <span>FORM <em>ATHLETICS</em></span>
       </a>
-      <span class="status-pill"><i></i> Training engine online</span>
+      <span class="status-pill"><i></i> Workout builder ready</span>
     </header>
 
     <main>
@@ -25,14 +25,14 @@
           <p class="eyebrow">PERSONAL TRAINING, REFINED</p>
           <h1 id="hero-title">Train with<br><span>intent.</span></h1>
           <p class="hero-description">
-            Build a focused session around your goal, body area, and experience level.
+            Build a focused session around your goal, body area, and training setup.
             Thoughtful programming, without the noise.
           </p>
 
           <div class="hero-stats" aria-label="Workout library statistics">
-            <div><strong>79</strong><span>Movements</span></div>
+            <div><strong>100+</strong><span>Movements</span></div>
             <div><strong>09</strong><span>Body areas</span></div>
-            <div><strong>02</strong><span>Skill levels</span></div>
+            <div><strong>06</strong><span>Equipment types</span></div>
           </div>
         </div>
 
@@ -50,7 +50,7 @@
             <p class="eyebrow">BUILD YOUR SESSION</p>
             <h2 id="builder-title">What are we training?</h2>
           </div>
-          <p>Three choices. One focused workout.</p>
+          <p>Five choices. One focused workout.</p>
         </div>
 
         <div class="controls">
@@ -85,12 +85,42 @@
           </div>
 
           <div class="form-group">
-            <label for="difficulty"><span>03</span> Experience</label>
+            <label for="difficulty"><span>03</span> Movement complexity</label>
             <div class="select-wrap">
               <select id="difficulty">
-                <option value="">Choose your level</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
+                <option value="">Choose complexity</option>
+                <option value="Any">Any complexity</option>
+                <option value="Foundational">Foundational</option>
+                <option value="Technical">More technical</option>
+              </select>
+            </div>
+            <small class="form-hint">Technique demand, not your fitness level.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="equipment"><span>04</span> Available equipment</label>
+            <div class="select-wrap">
+              <select id="equipment">
+                <option value="">Choose equipment</option>
+                <option value="Any">Any equipment</option>
+                <option value="Bodyweight">Bodyweight</option>
+                <option value="Dumbbells">Dumbbells</option>
+                <option value="Barbells">Barbells / EZ-bar</option>
+                <option value="Cables">Cables / bands</option>
+                <option value="Machines">Gym machines</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="duration"><span>05</span> Session length</label>
+            <div class="select-wrap">
+              <select id="duration">
+                <option value="">Choose duration</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
               </select>
             </div>
           </div>
@@ -130,7 +160,7 @@
 
     <footer>
       <span>FORM ATHLETICS © 2026</span>
-      <span>Exercise imagery from the public-domain Free Exercise DB.</span>
+      <span>Saved imagery: Free Exercise DB. Online catalog: ExerciseDB by AscendAPI.</span>
     </footer>
   </div>
 
@@ -141,5 +171,6 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="index.js"></script>
 </body>
 </html>

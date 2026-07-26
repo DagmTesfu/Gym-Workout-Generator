@@ -279,7 +279,7 @@ h1 span {
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 14px;
 }
 
@@ -293,6 +293,14 @@ h1 span {
   font-weight: 750;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.35;
 }
 
 .form-group label span {
@@ -316,6 +324,8 @@ h1 span {
 }
 
 select {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-height: 62px;
   padding: 0 48px 0 18px;
@@ -326,7 +336,25 @@ select {
   outline: none;
   cursor: pointer;
   appearance: none;
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.select-wrap:focus-within {
+  z-index: 20;
+}
+
+/* CSS-drawn arrow avoids corrupted glyphs and native dropdown flicker. */
+.select-wrap::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  color: transparent;
+  font-size: 0;
+  border-right: 2px solid var(--lime);
+  border-bottom: 2px solid var(--lime);
+  transform: translateY(-70%) rotate(45deg);
 }
 
 select:hover {
@@ -453,6 +481,34 @@ button:focus-visible {
   border-radius: var(--radius-md);
 }
 
+.catalog-heading {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding: 14px 2px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+}
+
+.catalog-heading strong {
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.catalog-heading span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.catalog-heading-online {
+  margin-top: 24px;
+}
+
 .empty-state strong {
   display: block;
   margin-bottom: 7px;
@@ -528,6 +584,21 @@ button:focus-visible {
   border-radius: 999px;
   font-size: 0.66rem;
   font-weight: 900;
+}
+
+.exercise-media-label {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 6px 9px;
+  color: #fff;
+  background: rgba(17, 19, 15, 0.78);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(5px);
 }
 
 .exercise-content {
