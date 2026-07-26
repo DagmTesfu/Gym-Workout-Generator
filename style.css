@@ -461,6 +461,60 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.workout-progress[hidden],
+.workout-complete-message[hidden] {
+  display: none;
+}
+
+.workout-progress {
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 26px rgba(17, 19, 15, 0.05);
+}
+
+.workout-progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.workout-progress-copy strong {
+  font-size: 0.9rem;
+}
+
+.workout-progress-copy span {
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+
+.workout-progress-track {
+  height: 10px;
+  margin-top: 14px;
+  overflow: hidden;
+  background: #deddd4;
+  border-radius: 999px;
+}
+
+.workout-progress-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--lime);
+  border-radius: inherit;
+  transition: width 240ms ease;
+}
+
+.workout-complete-message {
+  margin: 14px 0 0;
+  color: #3f5f00;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
 .workout-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -669,6 +723,41 @@ button:focus-visible {
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 760;
+}
+
+.exercise-completion {
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #4f534a;
+  background: #f0efe8;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.exercise-completion:hover {
+  background: #e8e7de;
+}
+
+.exercise-completion:focus-within {
+  outline: 3px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.exercise-complete-checkbox {
+  width: 19px;
+  height: 19px;
+  margin: 0;
+  flex: 0 0 19px;
+  cursor: pointer;
+  accent-color: var(--dark);
 }
 
 .exercise-actions {

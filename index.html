@@ -146,6 +146,31 @@
           <span class="results-note">Quality reps. Controlled tempo.</span>
         </div>
 
+        <div id="workoutProgress" class="workout-progress" hidden>
+          <div class="workout-progress-copy">
+            <strong id="workoutProgressText">Workout Progress: 0 of 0 completed</strong>
+            <span id="workoutProgressPercent">0%</span>
+          </div>
+          <div
+            id="workoutProgressBar"
+            class="workout-progress-track"
+            role="progressbar"
+            aria-label="Workout completion"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-valuetext="0 of 0 exercises completed"
+          >
+            <span id="workoutProgressFill" class="workout-progress-fill"></span>
+          </div>
+          <p
+            id="workoutCompleteMessage"
+            class="workout-complete-message"
+            aria-live="polite"
+            hidden
+          >Workout completed! Great job.</p>
+        </div>
+
         <div id="workoutList" class="workout-grid">
           <div class="empty-state">
             <span class="empty-icon" aria-hidden="true">↗</span>

@@ -11,6 +11,12 @@ const workoutList = document.getElementById("workoutList");
 const errorMessage = document.getElementById("errorMessage");
 const workoutAnimation = document.getElementById("workoutAnimation");
 const workoutResults = document.getElementById("workoutResults");
+const workoutProgress = document.getElementById("workoutProgress");
+const workoutProgressText = document.getElementById("workoutProgressText");
+const workoutProgressPercent = document.getElementById("workoutProgressPercent");
+const workoutProgressBar = document.getElementById("workoutProgressBar");
+const workoutProgressFill = document.getElementById("workoutProgressFill");
+const workoutCompleteMessage = document.getElementById("workoutCompleteMessage");
 const exerciseDialog = document.getElementById("exerciseDialog");
 const closeExerciseDialogButton = document.getElementById("closeExerciseDialog");
 const exerciseDialogImage = document.getElementById("exerciseDialogImage");
@@ -138,6 +144,48 @@ function getEquipmentCategories(equipmentText, exerciseName) {
 }
 
 
+// Recount the rendered checkboxes so progress always reflects the visible workout.
+function updateWorkoutProgress() {
+  const exerciseCheckboxes = workoutList.querySelectorAll(
+    ".exercise-complete-checkbox"
+  );
+  const completedCheckboxes = workoutList.querySelectorAll(
+    ".exercise-complete-checkbox:checked"
+  );
+  const total = exerciseCheckboxes.length;
+  const completed = completedCheckboxes.length;
+  const percentage = total > 0
+    ? Math.round((completed / total) * 100)
+    : 0;
+
+  workoutProgressText.textContent =
+    `Workout Progress: ${completed} of ${total} completed`;
+  workoutProgressPercent.textContent = `${percentage}%`;
+  workoutProgressFill.style.width = `${percentage}%`;
+  workoutProgressBar.setAttribute("aria-valuenow", String(percentage));
+  workoutProgressBar.setAttribute(
+    "aria-valuetext",
+    `${completed} of ${total} exercises completed`
+  );
+  workoutCompleteMessage.hidden = !(total > 0 && completed === total);
+  workoutProgress.hidden = total === 0;
+}
+
+
+function resetWorkoutProgress() {
+  workoutList.querySelectorAll(".exercise-complete-checkbox").forEach(function (checkbox) {
+    checkbox.checked = false;
+  });
+  workoutProgressText.textContent = "Workout Progress: 0 of 0 completed";
+  workoutProgressPercent.textContent = "0%";
+  workoutProgressFill.style.width = "0%";
+  workoutProgressBar.setAttribute("aria-valuenow", "0");
+  workoutProgressBar.setAttribute("aria-valuetext", "0 of 0 exercises completed");
+  workoutCompleteMessage.hidden = true;
+  workoutProgress.hidden = true;
+}
+
+
 // Build one card so initial rendering and single-card replacement stay identical.
 function buildExerciseCard(workout, cardIndex) {
   const safeName = escapeHtml(workout.name);
@@ -177,6 +225,16 @@ function buildExerciseCard(workout, cardIndex) {
           <span>${safeDifficulty} &middot; ${safeEquipment}</span>
           <span>${safeSource}</span>
         </div>
+        <label class="exercise-completion" for="exercise-complete-${cardIndex}">
+          <input
+            id="exercise-complete-${cardIndex}"
+            class="exercise-complete-checkbox"
+            type="checkbox"
+            data-workout-index="${cardIndex}"
+            aria-label="Mark ${safeName} as complete"
+          >
+          <span>Mark as complete</span>
+        </label>
         <div class="exercise-actions">
           <button
             class="replace-button"
@@ -261,6 +319,7 @@ function replaceDisplayedWorkout(cardIndex) {
     cardTemplate.innerHTML = buildExerciseCard(replacement, cardIndex).trim();
     currentCard.replaceWith(cardTemplate.content.firstElementChild);
   }
+  updateWorkoutProgress();
 }
 
 
@@ -384,6 +443,18 @@ async function generateWorkout() {
   }
 
   errorMessage.textContent = "";
+  resetWorkoutProgress();
+  displayedWorkouts = [];
+  replacementCandidates = [];
+  workoutList.innerHTML = `
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">&hellip;</span>
+      <div>
+        <strong>Building your workout.</strong>
+        <p>Matching exercises to your selected preferences.</p>
+      </div>
+    </div>
+  `;
   playWorkoutAnimation();
 
   const [exercises, localExerciseDetails] = await Promise.all([
@@ -607,6 +678,7 @@ async function generateWorkout() {
   if (totalMatches === 0) {
     displayedWorkouts = [];
     replacementCandidates = [];
+    resetWorkoutProgress();
     workoutList.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon" aria-hidden="true">!</span>
@@ -642,6 +714,7 @@ async function generateWorkout() {
 
   displayedWorkouts = [...filteredSavedWorkouts, ...filteredApiWorkouts];
   workoutList.innerHTML = savedSection + apiSection;
+  updateWorkoutProgress();
 }
 
 
@@ -699,6 +772,7 @@ function clearWorkout() {
   errorMessage.textContent = "";
   displayedWorkouts = [];
   replacementCandidates = [];
+  resetWorkoutProgress();
 
   if (exerciseDialog.open) {
     exerciseDialog.close();
@@ -735,6 +809,14 @@ workoutList.addEventListener("click", function (event) {
   if (workout) {
     showExerciseDetails(workout);
   }
+});
+
+workoutList.addEventListener("change", function (event) {
+  if (!event.target.matches(".exercise-complete-checkbox")) {
+    return;
+  }
+
+  updateWorkoutProgress();
 });
 
 closeExerciseDialogButton.addEventListener("click", function () {
