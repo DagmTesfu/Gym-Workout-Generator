@@ -11,8 +11,19 @@ const workoutList = document.getElementById("workoutList");
 const errorMessage = document.getElementById("errorMessage");
 const workoutAnimation = document.getElementById("workoutAnimation");
 const workoutResults = document.getElementById("workoutResults");
+const exerciseDialog = document.getElementById("exerciseDialog");
+const closeExerciseDialogButton = document.getElementById("closeExerciseDialog");
+const exerciseDialogImage = document.getElementById("exerciseDialogImage");
+const exerciseDialogSource = document.getElementById("exerciseDialogSource");
+const exerciseDialogTitle = document.getElementById("exerciseDialogTitle");
+const exerciseDialogTargets = document.getElementById("exerciseDialogTargets");
+const exerciseDialogSecondary = document.getElementById("exerciseDialogSecondary");
+const exerciseDialogEquipment = document.getElementById("exerciseDialogEquipment");
+const exerciseDialogInstructions = document.getElementById("exerciseDialogInstructions");
 
 const apiExercisesByBodyPart = new Map();
+let localExerciseDetailsPromise;
+let displayedWorkouts = [];
 
 const apiBodyPartBySelection = {
   Back: "back",
@@ -74,6 +85,27 @@ function normalizeExerciseName(value) {
         : word;
     })
     .join(" ");
+}
+
+
+function findRelatedExercise(exerciseMap, exerciseName) {
+  const normalizedName = normalizeExerciseName(exerciseName);
+  const exactMatch = exerciseMap.get(normalizedName);
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const candidates = [...exerciseMap.entries()].filter(function ([candidateName]) {
+    return normalizedName.length >= 6 && (
+      candidateName.includes(normalizedName) ||
+      normalizedName.includes(candidateName)
+    );
+  }).sort(function ([firstName], [secondName]) {
+    return Math.abs(firstName.length - normalizedName.length) -
+      Math.abs(secondName.length - normalizedName.length);
+  });
+
+  return candidates[0]?.[1] || null;
 }
 
 
@@ -177,6 +209,30 @@ async function fetchWorkouts(selectedBodyArea) {
 }
 
 
+async function fetchLocalExerciseDetails() {
+  if (!localExerciseDetailsPromise) {
+    localExerciseDetailsPromise = fetch("assets/exercise-database.json")
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error(`Could not load local exercise details (${response.status})`);
+        }
+        return response.json();
+      })
+      .then(function (exercises) {
+        return new Map(exercises.map(function (exercise) {
+          return [normalizeExerciseName(exercise.name), exercise];
+        }));
+      })
+      .catch(function (error) {
+        console.warn("Local exercise details are unavailable.", error);
+        return new Map();
+      });
+  }
+
+  return localExerciseDetailsPromise;
+}
+
+
 async function generateWorkout() {
   const selectedGoal = goalSelect.value;
   const selectedBodyArea = bodyAreaSelect.value;
@@ -199,7 +255,10 @@ async function generateWorkout() {
   errorMessage.textContent = "";
   playWorkoutAnimation();
 
-  const exercises = await fetchWorkouts(selectedBodyArea);
+  const [exercises, localExerciseDetails] = await Promise.all([
+    fetchWorkouts(selectedBodyArea),
+    fetchLocalExerciseDetails()
+  ]);
 
   workoutResults.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -231,14 +290,23 @@ async function generateWorkout() {
       sets: 3,
       reps: goals.includes("Strength") ? 8 : 12,
       image: exercise.gifUrl,
-      source: "ExerciseDB"
+      source: "ExerciseDB",
+      instructions: Array.isArray(exercise.instructions)
+        ? exercise.instructions
+        : [],
+      targetMuscles: exercise.targetMuscles || [],
+      secondaryMuscles: exercise.secondaryMuscles || [],
+      equipmentDetails: exercise.equipments || [],
+      gif: exercise.gifUrl || ""
     };
+
   }).filter(function (workout) {
     return !excludedExercisePattern.test(workout.name);
   });
 
   // Normalize the saved app.js workouts to the same card shape.
   const savedWorkouts = (window.loggedWorkouts || []).map(function (workout) {
+    const localDetails = findRelatedExercise(localExerciseDetails, workout.name);
     const imagePath = workout.image || window.exerciseImages?.[workout.name] || "";
     const optimizedImagePath = imagePath.startsWith("assets/exercises/")
       ? imagePath
@@ -257,7 +325,27 @@ async function generateWorkout() {
       sets: workout.sets,
       reps: workout.reps,
       image: optimizedImagePath,
-      source: "Saved workout"
+      source: "Saved workout",
+      instructions: Array.isArray(workout.instructions)
+        ? workout.instructions
+        : localDetails?.instructions || [],
+      targetMuscles:
+        (Array.isArray(workout.targetMuscles) && workout.targetMuscles.length > 0)
+          ? workout.targetMuscles
+          : localDetails?.primaryMuscles || [workout.target],
+      secondaryMuscles:
+        Array.isArray(workout.secondaryMuscles)
+          ? workout.secondaryMuscles
+          : localDetails?.secondaryMuscles || [],
+      equipmentDetails:
+        (Array.isArray(workout.equipmentDetails) && workout.equipmentDetails.length > 0)
+          ? workout.equipmentDetails
+          : localDetails?.equipment
+            ? [localDetails.equipment]
+            : getEquipmentCategories("", workout.name),
+      gif: /\.gif(?:$|\?)/i.test(optimizedImagePath)
+        ? optimizedImagePath
+        : ""
     };
   }).filter(function (workout) {
     return !excludedExercisePattern.test(workout.name);
@@ -295,6 +383,19 @@ async function generateWorkout() {
     return {
       ...workout,
       image: apiMatch.image || workout.image,
+      gif: apiMatch.gif || workout.gif,
+      instructions: apiMatch.instructions.length > 0
+        ? apiMatch.instructions
+        : workout.instructions,
+      targetMuscles: apiMatch.targetMuscles.length > 0
+        ? apiMatch.targetMuscles
+        : workout.targetMuscles,
+      secondaryMuscles: apiMatch.secondaryMuscles.length > 0
+        ? apiMatch.secondaryMuscles
+        : workout.secondaryMuscles,
+      equipmentDetails: apiMatch.equipmentDetails.length > 0
+        ? apiMatch.equipmentDetails
+        : workout.equipmentDetails,
       source: "Saved + animated API demo"
     };
   });
@@ -360,6 +461,7 @@ async function generateWorkout() {
   const totalMatches = filteredSavedWorkouts.length + filteredApiWorkouts.length;
 
   if (totalMatches === 0) {
+    displayedWorkouts = [];
     workoutList.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon" aria-hidden="true">!</span>
@@ -404,6 +506,15 @@ async function generateWorkout() {
               <span>${workout.difficulty} &middot; ${workout.equipment.join(" / ")}</span>
               <span>${workout.source}</span>
             </div>
+            <button
+              class="details-button"
+              type="button"
+              data-workout-index="${cardIndex}"
+              aria-label="View details for ${safeName}"
+            >
+              View details
+              <span aria-hidden="true">&rarr;</span>
+            </button>
           </div>
         </article>
       `;
@@ -431,7 +542,53 @@ async function generateWorkout() {
     ${buildCards(filteredApiWorkouts, filteredSavedWorkouts.length)}
   `;
 
+  displayedWorkouts = [...filteredSavedWorkouts, ...filteredApiWorkouts];
   workoutList.innerHTML = savedSection + apiSection;
+}
+
+
+function formatDetailList(values, fallback) {
+  const items = Array.isArray(values) ? values.filter(Boolean) : [];
+  return items.length > 0 ? items.join(", ") : fallback;
+}
+
+
+function showExerciseDetails(workout) {
+  const detailImage = workout.gif || workout.image;
+  exerciseDialogImage.src = detailImage;
+  exerciseDialogImage.alt = `${workout.name} exercise demonstration`;
+  exerciseDialogSource.textContent = workout.source;
+  exerciseDialogTitle.textContent = workout.name;
+  exerciseDialogTargets.textContent = formatDetailList(
+    workout.targetMuscles,
+    workout.target.join(", ")
+  );
+  exerciseDialogSecondary.textContent = formatDetailList(
+    workout.secondaryMuscles,
+    "Not listed"
+  );
+  exerciseDialogEquipment.textContent = formatDetailList(
+    workout.equipmentDetails,
+    workout.equipment.join(", ")
+  );
+
+  exerciseDialogInstructions.replaceChildren();
+  const instructions = workout.instructions.length > 0
+    ? workout.instructions
+    : [
+        "Detailed instructions are not available for this saved exercise yet. " +
+        "Use the demonstration as a visual reference and keep the movement controlled."
+      ];
+
+  const instructionFragment = document.createDocumentFragment();
+  instructions.forEach(function (instruction) {
+    const item = document.createElement("li");
+    item.textContent = String(instruction).replace(/^Step:\s*\d+\s*/i, "");
+    instructionFragment.appendChild(item);
+  });
+  exerciseDialogInstructions.appendChild(instructionFragment);
+
+  exerciseDialog.showModal();
 }
 
 
@@ -442,6 +599,11 @@ function clearWorkout() {
   equipmentSelect.value = "";
   durationSelect.value = "";
   errorMessage.textContent = "";
+  displayedWorkouts = [];
+
+  if (exerciseDialog.open) {
+    exerciseDialog.close();
+  }
 
   workoutList.innerHTML = `
     <div class="empty-state">
@@ -457,3 +619,25 @@ function clearWorkout() {
 
 generateButton.addEventListener("click", generateWorkout);
 clearButton.addEventListener("click", clearWorkout);
+
+workoutList.addEventListener("click", function (event) {
+  const detailsButton = event.target.closest(".details-button");
+  if (!detailsButton) {
+    return;
+  }
+
+  const workout = displayedWorkouts[Number(detailsButton.dataset.workoutIndex)];
+  if (workout) {
+    showExerciseDetails(workout);
+  }
+});
+
+closeExerciseDialogButton.addEventListener("click", function () {
+  exerciseDialog.close();
+});
+
+exerciseDialog.addEventListener("click", function (event) {
+  if (event.target === exerciseDialog) {
+    exerciseDialog.close();
+  }
+});

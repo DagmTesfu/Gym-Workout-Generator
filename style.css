@@ -671,6 +671,162 @@ button:focus-visible {
   font-weight: 760;
 }
 
+.details-button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--dark);
+  background: var(--lime);
+  border-radius: 10px;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.details-button:hover {
+  background: #d5ff6c;
+  transform: translateY(-1px);
+}
+
+.details-button span {
+  font-size: 1.1rem;
+}
+
+.exercise-dialog {
+  width: min(960px, calc(100% - 32px));
+  max-width: 960px;
+  max-height: min(820px, calc(100vh - 32px));
+  padding: 0;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
+}
+
+.exercise-dialog::backdrop {
+  background: rgba(10, 12, 9, 0.76);
+  backdrop-filter: blur(7px);
+}
+
+.exercise-dialog-shell {
+  position: relative;
+  max-height: inherit;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(360px, 1.1fr);
+  overflow: auto;
+}
+
+.dialog-close {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  right: 14px;
+  width: 42px;
+  min-height: 42px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  background: rgba(17, 19, 15, 0.82);
+  border-radius: 50%;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.dialog-close:hover {
+  background: var(--dark);
+}
+
+.dialog-media {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  background: #20221f;
+}
+
+.dialog-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  display: block;
+  object-fit: contain;
+}
+
+.dialog-content {
+  padding: clamp(32px, 5vw, 58px);
+}
+
+.dialog-content .eyebrow {
+  margin-bottom: 10px;
+  color: #697058;
+}
+
+.dialog-content h2 {
+  margin: 0 48px 28px 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.exercise-detail-grid {
+  margin: 0;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.exercise-detail-grid div {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.exercise-detail-grid dt {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.exercise-detail-grid dd {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-transform: capitalize;
+}
+
+.instruction-section {
+  margin-top: 28px;
+}
+
+.instruction-section h3 {
+  margin: 0 0 14px;
+  font-size: 1.2rem;
+  letter-spacing: -0.025em;
+}
+
+.instruction-section ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.instruction-section li {
+  padding-left: 7px;
+  color: #4f534a;
+  line-height: 1.55;
+}
+
+.instruction-section li + li {
+  margin-top: 10px;
+}
+
 footer {
   min-height: 90px;
   padding: 0 clamp(22px, 5vw, 72px);
@@ -806,6 +962,19 @@ footer {
   .workout-grid {
     grid-template-columns: 1fr;
   }
+
+  .exercise-dialog-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-media {
+    min-height: 280px;
+  }
+
+  .dialog-media img {
+    height: min(48vh, 380px);
+    min-height: 280px;
+  }
 }
 
 @media (max-width: 560px) {
@@ -872,6 +1041,21 @@ footer {
 
   .exercise-meta {
     display: none;
+  }
+
+  .exercise-dialog {
+    width: calc(100% - 18px);
+    max-height: calc(100vh - 18px);
+    border-radius: 18px;
+  }
+
+  .dialog-content {
+    padding: 28px 20px 34px;
+  }
+
+  .dialog-content h2 {
+    margin-right: 0;
+    font-size: 2rem;
   }
 
   .empty-state {

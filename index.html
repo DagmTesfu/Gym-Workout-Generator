@@ -164,6 +164,46 @@
     </footer>
   </div>
 
+  <dialog id="exerciseDialog" class="exercise-dialog" aria-labelledby="exerciseDialogTitle">
+    <div class="exercise-dialog-shell">
+      <button
+        id="closeExerciseDialog"
+        class="dialog-close"
+        type="button"
+        aria-label="Close exercise details"
+      >&times;</button>
+
+      <div class="dialog-media">
+        <img id="exerciseDialogImage" src="" alt="" decoding="async">
+      </div>
+
+      <div class="dialog-content">
+        <p id="exerciseDialogSource" class="eyebrow"></p>
+        <h2 id="exerciseDialogTitle"></h2>
+
+        <dl class="exercise-detail-grid">
+          <div>
+            <dt>Target muscles</dt>
+            <dd id="exerciseDialogTargets"></dd>
+          </div>
+          <div>
+            <dt>Secondary muscles</dt>
+            <dd id="exerciseDialogSecondary"></dd>
+          </div>
+          <div>
+            <dt>Equipment</dt>
+            <dd id="exerciseDialogEquipment"></dd>
+          </div>
+        </dl>
+
+        <section class="instruction-section" aria-labelledby="instructionTitle">
+          <h3 id="instructionTitle">How to perform it</h3>
+          <ol id="exerciseDialogInstructions"></ol>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
   <div id="workoutAnimation" class="workout-animation" aria-hidden="true">
     <div class="pulse-ring"></div>
     <div class="motion-mark">🏋</div>
