@@ -149,7 +149,13 @@
         <div id="workoutProgress" class="workout-progress" hidden>
           <div class="workout-progress-copy">
             <strong id="workoutProgressText">Workout Progress: 0 of 0 completed</strong>
-            <span id="workoutProgressPercent">0%</span>
+            <div class="workout-progress-meta">
+              <span class="workout-timer-label">
+                Elapsed
+                <strong id="workoutTimer">00:00</strong>
+              </span>
+              <span id="workoutProgressPercent">0%</span>
+            </div>
           </div>
           <div
             id="workoutProgressBar"
@@ -188,6 +194,20 @@
       <span>Saved imagery: Free Exercise DB. Online catalog: ExerciseDB by AscendAPI.</span>
     </footer>
   </div>
+
+  <dialog
+    id="workoutDraftDialog"
+    class="workout-draft-dialog"
+    aria-labelledby="workoutDraftTitle"
+  >
+    <p class="eyebrow">WORKOUT IN PROGRESS</p>
+    <h2 id="workoutDraftTitle">Resume your saved workout?</h2>
+    <p id="workoutDraftSummary" class="workout-draft-summary"></p>
+    <div class="workout-draft-actions">
+      <button id="discardWorkoutDraft" type="button">Discard draft</button>
+      <button id="resumeWorkoutDraft" type="button">Resume workout</button>
+    </div>
+  </dialog>
 
   <dialog id="exerciseDialog" class="exercise-dialog" aria-labelledby="exerciseDialogTitle">
     <div class="exercise-dialog-shell">
@@ -236,6 +256,7 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="workout-log.js"></script>
   <script src="index.js"></script>
 </body>
 </html>

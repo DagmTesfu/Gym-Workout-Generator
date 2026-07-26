@@ -17,6 +17,11 @@ const workoutProgressPercent = document.getElementById("workoutProgressPercent")
 const workoutProgressBar = document.getElementById("workoutProgressBar");
 const workoutProgressFill = document.getElementById("workoutProgressFill");
 const workoutCompleteMessage = document.getElementById("workoutCompleteMessage");
+const workoutTimer = document.getElementById("workoutTimer");
+const workoutDraftDialog = document.getElementById("workoutDraftDialog");
+const workoutDraftSummary = document.getElementById("workoutDraftSummary");
+const resumeWorkoutDraftButton = document.getElementById("resumeWorkoutDraft");
+const discardWorkoutDraftButton = document.getElementById("discardWorkoutDraft");
 const exerciseDialog = document.getElementById("exerciseDialog");
 const closeExerciseDialogButton = document.getElementById("closeExerciseDialog");
 const exerciseDialogImage = document.getElementById("exerciseDialogImage");
@@ -32,6 +37,11 @@ let localExerciseDetailsPromise;
 let displayedWorkouts = [];
 let replacementCandidates = [];
 const workoutLogState = new Map();
+let activeSession = null;
+let pendingSavedSession = null;
+let workoutTimerInterval = null;
+let workoutTimerStartedAt = null;
+let draftSaveTimeout = null;
 
 const apiBodyPartBySelection = {
   Back: "back",
@@ -151,6 +161,7 @@ function createExerciseLogState(workout) {
   const plannedReps = String(workout.reps ?? "");
 
   return {
+    instanceId: WorkoutLog.createId("exercise"),
     completed: false,
     dirty: false,
     notes: "",
@@ -188,6 +199,122 @@ function getExerciseLogState(workout, cardIndex) {
     workoutLogState.set(cardIndex, createExerciseLogState(workout));
   }
   return workoutLogState.get(cardIndex);
+}
+
+
+function getElapsedWorkoutSeconds() {
+  if (!activeSession) {
+    return 0;
+  }
+
+  const runningSeconds = workoutTimerStartedAt === null
+    ? 0
+    : Math.floor((Date.now() - workoutTimerStartedAt) / 1000);
+  return Math.max(0, Math.floor(activeSession.elapsedSeconds || 0) + runningSeconds);
+}
+
+
+function updateWorkoutTimerDisplay() {
+  workoutTimer.textContent = WorkoutLog.formatElapsedTime(
+    getElapsedWorkoutSeconds()
+  );
+}
+
+
+function buildActiveSessionSnapshot() {
+  if (!activeSession) {
+    return null;
+  }
+
+  return {
+    ...activeSession,
+    elapsedSeconds: getElapsedWorkoutSeconds(),
+    displayedWorkouts,
+    replacementCandidates,
+    exerciseLogs: displayedWorkouts.map(function (_, index) {
+      return workoutLogState.get(index);
+    })
+  };
+}
+
+
+function saveActiveWorkoutNow() {
+  const snapshot = buildActiveSessionSnapshot();
+  if (!snapshot) {
+    return;
+  }
+
+  const result = WorkoutLog.saveActiveSession(snapshot);
+  if (!result.ok) {
+    console.warn("The active workout draft could not be saved.", result.error);
+    errorMessage.textContent =
+      "This workout could not be saved in your browser. Keep this page open.";
+  }
+}
+
+
+function queueActiveWorkoutSave() {
+  if (!activeSession) {
+    return;
+  }
+
+  window.clearTimeout(draftSaveTimeout);
+  draftSaveTimeout = window.setTimeout(saveActiveWorkoutNow, 250);
+}
+
+
+function startWorkoutTimer() {
+  if (!activeSession || workoutTimerStartedAt !== null) {
+    return;
+  }
+
+  workoutTimerStartedAt = Date.now();
+  updateWorkoutTimerDisplay();
+  window.clearInterval(workoutTimerInterval);
+  workoutTimerInterval = window.setInterval(function () {
+    const elapsedSeconds = getElapsedWorkoutSeconds();
+    workoutTimer.textContent = WorkoutLog.formatElapsedTime(elapsedSeconds);
+    if (elapsedSeconds > 0 && elapsedSeconds % 15 === 0) {
+      saveActiveWorkoutNow();
+    }
+  }, 1000);
+}
+
+
+function pauseWorkoutTimer() {
+  if (activeSession && workoutTimerStartedAt !== null) {
+    activeSession.elapsedSeconds = getElapsedWorkoutSeconds();
+  }
+  workoutTimerStartedAt = null;
+  window.clearInterval(workoutTimerInterval);
+  workoutTimerInterval = null;
+  updateWorkoutTimerDisplay();
+}
+
+
+function discardActiveWorkout() {
+  window.clearTimeout(draftSaveTimeout);
+  draftSaveTimeout = null;
+  pauseWorkoutTimer();
+  activeSession = null;
+  WorkoutLog.clearActiveSession();
+  workoutTimer.textContent = "00:00";
+}
+
+
+function beginActiveWorkout(preferences, savedWorkoutCount, onlineStatus) {
+  activeSession = WorkoutLog.createActiveSession({
+    preferences,
+    savedWorkoutCount,
+    onlineStatus,
+    displayedWorkouts,
+    replacementCandidates,
+    exerciseLogs: displayedWorkouts.map(function (_, index) {
+      return workoutLogState.get(index);
+    })
+  });
+  startWorkoutTimer();
+  saveActiveWorkoutNow();
 }
 
 
@@ -271,6 +398,7 @@ function buildSetRow(set, setIndex, cardIndex, canRemove) {
 
 function buildExerciseLogger(workout, cardIndex) {
   const exerciseLog = getExerciseLogState(workout, cardIndex);
+  const safeInstanceId = escapeHtml(exerciseLog.instanceId);
   const completedSets = exerciseLog.sets.filter(function (set) {
     return set.completed;
   }).length;
@@ -295,10 +423,10 @@ function buildExerciseLogger(workout, cardIndex) {
           type="button"
           data-workout-index="${cardIndex}"
         >+ Add set</button>
-        <label class="exercise-notes-label" for="exercise-notes-${cardIndex}">
+        <label class="exercise-notes-label" for="exercise-notes-${safeInstanceId}">
           <span>Exercise notes</span>
           <textarea
-            id="exercise-notes-${cardIndex}"
+            id="exercise-notes-${safeInstanceId}"
             class="exercise-notes"
             rows="2"
             maxlength="500"
@@ -377,6 +505,7 @@ function synchronizeExerciseCompletion(cardIndex) {
   exerciseCheckbox.indeterminate = someSetsCompleted;
   updateLoggerStatus(cardIndex);
   updateWorkoutProgress();
+  queueActiveWorkoutSave();
 }
 
 
@@ -408,6 +537,7 @@ function setAllExerciseSetsCompleted(cardIndex, completed) {
 
   updateLoggerStatus(cardIndex);
   updateWorkoutProgress();
+  queueActiveWorkoutSave();
 }
 
 
@@ -447,6 +577,7 @@ function resetWorkoutProgress() {
 // Build one card so initial rendering and single-card replacement stay identical.
 function buildExerciseCard(workout, cardIndex) {
   const exerciseLog = getExerciseLogState(workout, cardIndex);
+  const safeInstanceId = escapeHtml(exerciseLog.instanceId);
   const safeName = escapeHtml(workout.name);
   const safeImage = escapeHtml(workout.image);
   const safeTarget = escapeHtml(workout.target.join(" / "));
@@ -462,6 +593,7 @@ function buildExerciseCard(workout, cardIndex) {
     <article
       class="exercise-card"
       data-workout-index="${cardIndex}"
+      data-exercise-instance-id="${safeInstanceId}"
       style="animation-delay: ${cardIndex * 55}ms"
     >
       <div class="exercise-visual">
@@ -485,12 +617,13 @@ function buildExerciseCard(workout, cardIndex) {
           <span>${safeDifficulty} &middot; ${safeEquipment}</span>
           <span>${safeSource}</span>
         </div>
-        <label class="exercise-completion" for="exercise-complete-${cardIndex}">
+        <label class="exercise-completion" for="exercise-complete-${safeInstanceId}">
           <input
-            id="exercise-complete-${cardIndex}"
+            id="exercise-complete-${safeInstanceId}"
             class="exercise-complete-checkbox"
             type="checkbox"
             data-workout-index="${cardIndex}"
+            data-exercise-instance-id="${safeInstanceId}"
             aria-label="Mark ${safeName} as complete"${checkedAttribute}
           >
           <span>Mark as complete</span>
@@ -526,6 +659,102 @@ function buildCards(workouts, startIndex) {
   return workouts.map(function (workout, index) {
     return buildExerciseCard(workout, startIndex + index);
   }).join("");
+}
+
+
+function renderDisplayedWorkout(savedWorkoutCount, onlineStatus) {
+  const savedWorkouts = displayedWorkouts.slice(0, savedWorkoutCount);
+  const onlineWorkouts = displayedWorkouts.slice(savedWorkoutCount);
+  const savedSection = savedWorkouts.length > 0
+    ? `
+      <div class="catalog-heading">
+        <strong>Your saved workouts</strong>
+        <span>${savedWorkouts.length} matches</span>
+      </div>
+      ${buildCards(savedWorkouts, 0)}
+    `
+    : "";
+  const onlineSection = `
+    <div class="catalog-heading catalog-heading-online">
+      <strong>Online recommendations</strong>
+      <span>${escapeHtml(onlineStatus)}</span>
+    </div>
+    ${buildCards(onlineWorkouts, savedWorkouts.length)}
+  `;
+
+  workoutList.innerHTML = savedSection + onlineSection;
+  workoutLogState.forEach(function (_, cardIndex) {
+    synchronizeExerciseCompletion(cardIndex);
+  });
+  updateWorkoutProgress();
+}
+
+
+function restoreActiveWorkout(session) {
+  activeSession = session;
+  displayedWorkouts = session.displayedWorkouts;
+  replacementCandidates = session.replacementCandidates;
+  workoutLogState.clear();
+
+  displayedWorkouts.forEach(function (workout, index) {
+    const savedLog = session.exerciseLogs[index];
+    const fallbackLog = createExerciseLogState(workout);
+    const restoredSets = Array.isArray(savedLog?.sets) && savedLog.sets.length > 0
+      ? savedLog.sets
+      : fallbackLog.sets;
+
+    workoutLogState.set(index, {
+      ...fallbackLog,
+      ...savedLog,
+      instanceId: typeof savedLog?.instanceId === "string"
+        ? savedLog.instanceId
+        : fallbackLog.instanceId,
+      sets: restoredSets
+    });
+  });
+
+  goalSelect.value = session.preferences.goal;
+  bodyAreaSelect.value = session.preferences.bodyArea;
+  difficultySelect.value = session.preferences.difficulty;
+  equipmentSelect.value = session.preferences.equipment;
+  durationSelect.value = session.preferences.duration;
+  errorMessage.textContent = "";
+
+  const savedWorkoutCount = Math.min(
+    Math.max(0, Number(session.savedWorkoutCount) || 0),
+    displayedWorkouts.length
+  );
+  renderDisplayedWorkout(
+    savedWorkoutCount,
+    String(session.onlineStatus || "Restored from saved workout")
+  );
+  pendingSavedSession = null;
+  workoutDraftDialog.close();
+  startWorkoutTimer();
+  workoutResults.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
+function offerSavedWorkoutDraft() {
+  const result = WorkoutLog.loadActiveSession();
+  if (result.error) {
+    console.warn("The saved workout draft could not be restored.", result.error);
+    errorMessage.textContent =
+      "A saved workout draft could not be restored and was discarded.";
+    WorkoutLog.clearActiveSession();
+    return;
+  }
+  if (!result.session || result.session.displayedWorkouts.length === 0) {
+    return;
+  }
+
+  pendingSavedSession = result.session;
+  const exerciseCount = result.session.displayedWorkouts.length;
+  workoutDraftSummary.textContent =
+    `${exerciseCount} exercises · ` +
+    `${WorkoutLog.formatElapsedTime(result.session.elapsedSeconds)} elapsed. ` +
+    "Your set entries and notes are ready to continue.";
+  workoutDraftDialog.showModal();
 }
 
 
@@ -590,6 +819,7 @@ function replaceDisplayedWorkout(cardIndex) {
     currentCard.replaceWith(cardTemplate.content.firstElementChild);
   }
   updateWorkoutProgress();
+  queueActiveWorkoutSave();
 }
 
 
@@ -720,6 +950,7 @@ async function generateWorkout() {
   }
 
   errorMessage.textContent = "";
+  discardActiveWorkout();
   resetWorkoutProgress();
   displayedWorkouts = [];
   replacementCandidates = [];
@@ -972,30 +1203,24 @@ async function generateWorkout() {
 
   displayedWorkouts = [...filteredSavedWorkouts, ...filteredApiWorkouts];
   initializeWorkoutLogState(displayedWorkouts);
+  const onlineStatus = filteredApiWorkouts.length > 0
+    ? `${filteredApiWorkouts.length} matches`
+    : exercises.length > 0
+      ? "No online matches for these filters"
+      : "Temporarily unavailable";
 
-  const savedSection = filteredSavedWorkouts.length > 0
-    ? `
-      <div class="catalog-heading">
-        <strong>Your saved workouts</strong>
-        <span>${filteredSavedWorkouts.length} matches</span>
-      </div>
-      ${buildCards(filteredSavedWorkouts, 0)}
-    `
-    : "";
-  const apiSection = `
-    <div class="catalog-heading catalog-heading-online">
-      <strong>Online recommendations</strong>
-      <span>${filteredApiWorkouts.length > 0
-        ? `${filteredApiWorkouts.length} matches`
-        : exercises.length > 0
-          ? "No online matches for these filters"
-          : "Temporarily unavailable"}</span>
-    </div>
-    ${buildCards(filteredApiWorkouts, filteredSavedWorkouts.length)}
-  `;
-
-  workoutList.innerHTML = savedSection + apiSection;
-  updateWorkoutProgress();
+  renderDisplayedWorkout(filteredSavedWorkouts.length, onlineStatus);
+  beginActiveWorkout(
+    {
+      goal: selectedGoal,
+      bodyArea: selectedBodyArea,
+      difficulty: selectedDifficulty,
+      equipment: selectedEquipment,
+      duration: selectedDuration
+    },
+    filteredSavedWorkouts.length,
+    onlineStatus
+  );
 }
 
 
@@ -1060,6 +1285,7 @@ function clearWorkout() {
   errorMessage.textContent = "";
   displayedWorkouts = [];
   replacementCandidates = [];
+  discardActiveWorkout();
   workoutLogState.clear();
   resetWorkoutProgress();
 
@@ -1187,6 +1413,7 @@ workoutList.addEventListener("input", function (event) {
   exerciseLog.dirty = true;
   if (field === "notes") {
     exerciseLog.notes = event.target.value;
+    queueActiveWorkoutSave();
     return;
   }
 
@@ -1200,6 +1427,7 @@ workoutList.addEventListener("input", function (event) {
   });
   if (set) {
     set[field] = event.target.value;
+    queueActiveWorkoutSave();
   }
 });
 
@@ -1212,3 +1440,35 @@ exerciseDialog.addEventListener("click", function (event) {
     exerciseDialog.close();
   }
 });
+
+resumeWorkoutDraftButton.addEventListener("click", function () {
+  if (pendingSavedSession) {
+    restoreActiveWorkout(pendingSavedSession);
+  }
+});
+
+discardWorkoutDraftButton.addEventListener("click", function () {
+  pendingSavedSession = null;
+  WorkoutLog.clearActiveSession();
+  workoutDraftDialog.close();
+});
+
+workoutDraftDialog.addEventListener("cancel", function (event) {
+  // Require an explicit choice so the stored draft is not forgotten accidentally.
+  event.preventDefault();
+});
+
+window.addEventListener("pagehide", function () {
+  if (activeSession) {
+    pauseWorkoutTimer();
+    saveActiveWorkoutNow();
+  }
+});
+
+window.addEventListener("pageshow", function () {
+  if (activeSession && workoutTimerStartedAt === null) {
+    startWorkoutTimer();
+  }
+});
+
+offerSavedWorkoutDraft();
