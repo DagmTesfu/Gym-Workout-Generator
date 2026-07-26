@@ -1,11 +1,11 @@
 # Form Athletics - Workout Generator
 
-A responsive gym workout generator that creates a focused session from a user's training goal, body area, and experience level.
+A responsive gym workout generator that creates a focused session from a user's training goal, body area, movement complexity, equipment, and available time.
 
 ## Features
 
-- 79 workout records across nine body areas.
-- Beginner and intermediate workout filtering.
+- 84 saved workouts plus live recommendations across nine body areas.
+- Foundational and technical movement filtering.
 - Strength, muscle-building, and athletic training goals.
 - Exercise cards with sets, reps, difficulty, and relevant exercise imagery.
 - Responsive layout for desktop, tablet, and mobile screens.
@@ -14,11 +14,12 @@ A responsive gym workout generator that creates a focused session from a user's 
 
 ## Run locally
 
-This is a static website - no dependency installation or build command is needed.
+The frontend has no build step. Use the included Node server so online recommendations can use the same-origin API proxy.
 
-1. Open `index.html` in a browser, or use a local development server.
-2. Choose a goal, body area, and experience level.
-3. Select **Generate workout** to view matching exercises.
+1. Run `npm start`.
+2. Open the local URL printed in the terminal.
+3. Choose a goal, body area, movement complexity, equipment, and session length.
+4. Select **Generate workout** to view matching exercises.
 
 ## Project structure
 
