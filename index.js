@@ -18,6 +18,11 @@ const workoutProgressBar = document.getElementById("workoutProgressBar");
 const workoutProgressFill = document.getElementById("workoutProgressFill");
 const workoutCompleteMessage = document.getElementById("workoutCompleteMessage");
 const workoutTimer = document.getElementById("workoutTimer");
+const finishWorkoutButton = document.getElementById("finishWorkoutButton");
+const workoutHistory = document.getElementById("workoutHistory");
+const workoutHistoryCount = document.getElementById("workoutHistoryCount");
+const workoutHistoryMessage = document.getElementById("workoutHistoryMessage");
+const workoutHistoryList = document.getElementById("workoutHistoryList");
 const workoutDraftDialog = document.getElementById("workoutDraftDialog");
 const workoutDraftSummary = document.getElementById("workoutDraftSummary");
 const resumeWorkoutDraftButton = document.getElementById("resumeWorkoutDraft");
@@ -42,6 +47,8 @@ let pendingSavedSession = null;
 let workoutTimerInterval = null;
 let workoutTimerStartedAt = null;
 let draftSaveTimeout = null;
+let workoutHistorySessions = [];
+let workoutIsFinished = false;
 
 const apiBodyPartBySelection = {
   Back: "back",
@@ -299,10 +306,12 @@ function discardActiveWorkout() {
   activeSession = null;
   WorkoutLog.clearActiveSession();
   workoutTimer.textContent = "00:00";
+  workoutIsFinished = false;
 }
 
 
 function beginActiveWorkout(preferences, savedWorkoutCount, onlineStatus) {
+  workoutIsFinished = false;
   activeSession = WorkoutLog.createActiveSession({
     preferences,
     savedWorkoutCount,
@@ -313,8 +322,69 @@ function beginActiveWorkout(preferences, savedWorkoutCount, onlineStatus) {
       return workoutLogState.get(index);
     })
   });
+  setWorkoutReadOnly(false);
   startWorkoutTimer();
   saveActiveWorkoutNow();
+}
+
+
+function setWorkoutReadOnly(readOnly) {
+  workoutIsFinished = readOnly;
+  workoutList.classList.toggle("is-read-only", readOnly);
+  workoutList.querySelectorAll(
+    ".exercise-complete-checkbox, .set-complete-checkbox, .set-log-input, " +
+    ".exercise-notes, .add-set-button, .remove-set-button, .replace-button"
+  ).forEach(function (control) {
+    if (!readOnly && control.matches(".remove-set-button")) {
+      const exerciseLog = workoutLogState.get(Number(control.dataset.workoutIndex));
+      control.disabled = !exerciseLog || exerciseLog.sets.length <= 1;
+      return;
+    }
+    control.disabled = readOnly;
+  });
+  finishWorkoutButton.disabled = readOnly;
+  finishWorkoutButton.textContent = readOnly ? "Workout saved" : "Finish workout";
+}
+
+
+function createFinishedWorkout(status) {
+  const snapshot = buildActiveSessionSnapshot();
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    schemaVersion: WorkoutLog.schemaVersion,
+    id: snapshot.id,
+    status,
+    startedAt: snapshot.startedAt,
+    finishedAt: new Date().toISOString(),
+    elapsedSeconds: snapshot.elapsedSeconds,
+    preferences: snapshot.preferences,
+    exercises: displayedWorkouts.map(function (workout, index) {
+      const exerciseLog = workoutLogState.get(index);
+      return {
+        instanceId: exerciseLog.instanceId,
+        name: workout.name,
+        target: workout.target,
+        equipment: workout.equipment,
+        source: workout.source,
+        plannedSets: workout.sets,
+        plannedReps: workout.reps,
+        completed: exerciseLog.completed,
+        notes: exerciseLog.notes,
+        sets: exerciseLog.sets.map(function (set) {
+          return {
+            id: set.id,
+            weight: set.weight,
+            actualReps: set.actualReps,
+            rpe: set.rpe,
+            completed: set.completed
+          };
+        })
+      };
+    })
+  };
 }
 
 
@@ -728,6 +798,7 @@ function restoreActiveWorkout(session) {
     savedWorkoutCount,
     String(session.onlineStatus || "Restored from saved workout")
   );
+  setWorkoutReadOnly(false);
   pendingSavedSession = null;
   workoutDraftDialog.close();
   startWorkoutTimer();
@@ -755,6 +826,194 @@ function offerSavedWorkoutDraft() {
     `${WorkoutLog.formatElapsedTime(result.session.elapsedSeconds)} elapsed. ` +
     "Your set entries and notes are ready to continue.";
   workoutDraftDialog.showModal();
+}
+
+
+function calculateHistorySummary(session) {
+  let completedExercises = 0;
+  let completedSets = 0;
+  let totalVolume = 0;
+
+  session.exercises.forEach(function (exercise) {
+    if (exercise.completed) {
+      completedExercises += 1;
+    }
+    exercise.sets.forEach(function (set) {
+      if (!set.completed) {
+        return;
+      }
+      completedSets += 1;
+      const weight = Number.parseFloat(set.weight);
+      const reps = Number.parseFloat(set.actualReps);
+      if (Number.isFinite(weight) && Number.isFinite(reps) && weight > 0 && reps > 0) {
+        totalVolume += weight * reps;
+      }
+    });
+  });
+
+  return { completedExercises, completedSets, totalVolume };
+}
+
+
+function buildHistoryExercise(exercise) {
+  const setRows = exercise.sets.map(function (set, index) {
+    return `
+      <tr>
+        <th scope="row">${index + 1}</th>
+        <td>${set.weight === "" ? "—" : `${escapeHtml(set.weight)} kg`}</td>
+        <td>${set.actualReps === "" ? "—" : escapeHtml(set.actualReps)}</td>
+        <td>${set.rpe === "" ? "—" : escapeHtml(set.rpe)}</td>
+        <td>${set.completed ? "Done" : "Not completed"}</td>
+      </tr>
+    `;
+  }).join("");
+  const safeNotes = String(exercise.notes || "").trim();
+
+  return `
+    <section class="history-exercise">
+      <div class="history-exercise-heading">
+        <div>
+          <span>${escapeHtml((exercise.target || []).join(" / "))}</span>
+          <h4>${escapeHtml(exercise.name)}</h4>
+        </div>
+        <span class="history-exercise-status ${exercise.completed ? "is-complete" : ""}">
+          ${exercise.completed ? "Complete" : "Partial"}
+        </span>
+      </div>
+      ${safeNotes ? `<p class="history-exercise-notes">${escapeHtml(safeNotes)}</p>` : ""}
+      <div class="history-set-table-wrap">
+        <table class="history-set-table">
+          <thead>
+            <tr><th>Set</th><th>Weight</th><th>Reps</th><th>RPE</th><th>Status</th></tr>
+          </thead>
+          <tbody>${setRows}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+
+function buildHistoryCard(session) {
+  const summary = calculateHistorySummary(session);
+  const finishedDate = new Date(session.finishedAt);
+  const formattedDate = Number.isNaN(finishedDate.getTime())
+    ? "Saved workout"
+    : new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(finishedDate);
+  const volume = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1
+  }).format(summary.totalVolume);
+  const statusLabel = session.status === "complete" ? "Completed" : "Partial";
+  const exercises = session.exercises.map(buildHistoryExercise).join("");
+
+  return `
+    <article class="history-card">
+      <details>
+        <summary>
+          <div class="history-card-title">
+            <span>${escapeHtml(formattedDate)}</span>
+            <strong>${escapeHtml(session.preferences.bodyArea || "Workout")}</strong>
+          </div>
+          <div class="history-card-summary">
+            <span>${escapeHtml(session.preferences.goal || "Training")}</span>
+            <span class="history-status history-status-${session.status}">${statusLabel}</span>
+          </div>
+        </summary>
+        <div class="history-card-content">
+          <div class="history-metrics">
+            <div><strong>${summary.completedExercises}/${session.exercises.length}</strong><span>Exercises</span></div>
+            <div><strong>${summary.completedSets}</strong><span>Completed sets</span></div>
+            <div><strong>${WorkoutLog.formatElapsedTime(session.elapsedSeconds)}</strong><span>Duration</span></div>
+            <div><strong>${volume} kg</strong><span>Total volume</span></div>
+          </div>
+          <div class="history-exercises">${exercises}</div>
+          <button
+            class="delete-history-button"
+            type="button"
+            data-history-id="${escapeHtml(session.id)}"
+          >Delete workout</button>
+        </div>
+      </details>
+    </article>
+  `;
+}
+
+
+function renderWorkoutHistory() {
+  workoutHistory.hidden = workoutHistorySessions.length === 0;
+  workoutHistoryCount.textContent = `${workoutHistorySessions.length} ` +
+    (workoutHistorySessions.length === 1 ? "session" : "sessions");
+  workoutHistoryList.innerHTML = workoutHistorySessions.map(buildHistoryCard).join("");
+}
+
+
+function loadWorkoutHistory() {
+  const result = WorkoutLog.loadWorkoutHistory();
+  if (result.error) {
+    console.warn("Workout history could not be loaded.", result.error);
+    errorMessage.textContent = "Your saved workout history could not be loaded.";
+    return;
+  }
+  workoutHistorySessions = result.sessions;
+  renderWorkoutHistory();
+}
+
+
+function finishActiveWorkout() {
+  if (!activeSession || displayedWorkouts.length === 0 || workoutIsFinished) {
+    return;
+  }
+
+  const completedExercises = [...workoutLogState.values()].filter(function (exerciseLog) {
+    return exerciseLog.completed;
+  }).length;
+  const status = completedExercises === displayedWorkouts.length
+    ? "complete"
+    : "partial";
+
+  if (
+    status === "partial" &&
+    !window.confirm(
+      `You completed ${completedExercises} of ${displayedWorkouts.length} exercises. ` +
+      "Save this as a partial workout?"
+    )
+  ) {
+    return;
+  }
+
+  pauseWorkoutTimer();
+  const finishedWorkout = createFinishedWorkout(status);
+  const savedHistory = WorkoutLog.addFinishedSession(finishedWorkout);
+  if (!savedHistory.ok) {
+    console.warn("The finished workout could not be saved.", savedHistory.error);
+    errorMessage.textContent =
+      "The workout could not be saved to history. Your active draft is still available.";
+    startWorkoutTimer();
+    return;
+  }
+
+  workoutHistorySessions = savedHistory.sessions;
+  const clearedDraft = WorkoutLog.clearActiveSession();
+  window.clearTimeout(draftSaveTimeout);
+  draftSaveTimeout = null;
+  activeSession = null;
+  setWorkoutReadOnly(true);
+  renderWorkoutHistory();
+  workoutHistoryMessage.textContent = status === "complete"
+    ? "Completed workout saved. Great job."
+    : "Partial workout saved.";
+
+  if (!clearedDraft.ok) {
+    console.warn("The finished workout draft could not be removed.", clearedDraft.error);
+    errorMessage.textContent =
+      "The workout was saved, but its active draft could not be removed.";
+  } else {
+    errorMessage.textContent = "";
+  }
+  workoutHistory.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -943,6 +1202,7 @@ async function generateWorkout() {
   }
 
   if (
+    activeSession &&
     hasEnteredWorkoutData() &&
     !window.confirm("Generate a new workout and discard the current set log?")
   ) {
@@ -1271,6 +1531,7 @@ function showExerciseDetails(workout) {
 
 function clearWorkout() {
   if (
+    activeSession &&
     hasEnteredWorkoutData() &&
     !window.confirm("Clear this workout and discard the current set log?")
   ) {
@@ -1307,6 +1568,7 @@ function clearWorkout() {
 
 generateButton.addEventListener("click", generateWorkout);
 clearButton.addEventListener("click", clearWorkout);
+finishWorkoutButton.addEventListener("click", finishActiveWorkout);
 
 workoutList.addEventListener("click", function (event) {
   const addSetButton = event.target.closest(".add-set-button");
@@ -1441,6 +1703,30 @@ exerciseDialog.addEventListener("click", function (event) {
   }
 });
 
+workoutHistoryList.addEventListener("click", function (event) {
+  const deleteButton = event.target.closest(".delete-history-button");
+  if (!deleteButton) {
+    return;
+  }
+
+  const sessionId = deleteButton.dataset.historyId;
+  if (!window.confirm("Delete this workout from your history?")) {
+    return;
+  }
+
+  const result = WorkoutLog.deleteFinishedSession(sessionId);
+  if (!result.ok) {
+    console.warn("The workout could not be deleted.", result.error);
+    errorMessage.textContent = "The workout could not be deleted from history.";
+    return;
+  }
+
+  workoutHistorySessions = result.sessions;
+  renderWorkoutHistory();
+  workoutHistoryMessage.textContent = "Workout deleted.";
+  errorMessage.textContent = "";
+});
+
 resumeWorkoutDraftButton.addEventListener("click", function () {
   if (pendingSavedSession) {
     restoreActiveWorkout(pendingSavedSession);
@@ -1471,4 +1757,5 @@ window.addEventListener("pageshow", function () {
   }
 });
 
+loadWorkoutHistory();
 offerSavedWorkoutDraft();

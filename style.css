@@ -538,6 +538,272 @@ button:focus-visible {
   font-weight: 800;
 }
 
+.finish-workout-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 16px;
+  color: var(--dark);
+  background: var(--lime);
+  border-radius: 10px;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.finish-workout-button:hover:not(:disabled) {
+  background: #d5ff6c;
+  transform: translateY(-1px);
+}
+
+.finish-workout-button:disabled {
+  color: #65685f;
+  background: #deddd4;
+  cursor: default;
+}
+
+.workout-history[hidden] {
+  display: none;
+}
+
+.workout-history {
+  padding: 82px 0 20px;
+}
+
+.history-heading {
+  margin-bottom: 26px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.history-heading h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.7rem);
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+
+.history-count {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.history-message {
+  min-height: 20px;
+  margin: -12px 0 12px;
+  color: #3f5f00;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.workout-history-list {
+  display: grid;
+  gap: 14px;
+}
+
+.history-card {
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 26px rgba(17, 19, 15, 0.05);
+}
+
+.history-card > details > summary {
+  min-height: 92px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.history-card > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-card > details > summary::after {
+  content: "+";
+  color: var(--muted);
+  font-size: 1.4rem;
+}
+
+.history-card > details[open] > summary::after {
+  content: "−";
+}
+
+.history-card-title {
+  display: grid;
+  gap: 4px;
+}
+
+.history-card-title span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.history-card-title strong {
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.history-card-summary {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.history-status,
+.history-exercise-status {
+  padding: 6px 9px;
+  background: #ebeae3;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.history-status-complete,
+.history-exercise-status.is-complete {
+  color: #3f5f00;
+  background: #e3f6b3;
+}
+
+.history-card-content {
+  padding: 0 22px 24px;
+  border-top: 1px solid var(--line);
+}
+
+.history-metrics {
+  margin: 0 -22px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line);
+}
+
+.history-metrics div {
+  padding: 18px 22px;
+}
+
+.history-metrics div + div {
+  border-left: 1px solid var(--line);
+}
+
+.history-metrics strong,
+.history-metrics span {
+  display: block;
+}
+
+.history-metrics strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-metrics span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.history-exercises {
+  display: grid;
+  gap: 12px;
+}
+
+.history-exercise {
+  padding: 16px;
+  background: #f0efe8;
+  border-radius: 12px;
+}
+
+.history-exercise-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.history-exercise-heading > div > span {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.history-exercise h4 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.history-exercise-notes {
+  margin: 10px 0 0;
+  color: #565950;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.history-set-table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+.history-set-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+  text-align: left;
+}
+
+.history-set-table th,
+.history-set-table td {
+  padding: 8px;
+  border-bottom: 1px solid #d8d6cd;
+  white-space: nowrap;
+}
+
+.history-set-table thead th {
+  color: var(--muted);
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.delete-history-button {
+  min-height: 42px;
+  margin-top: 18px;
+  padding: 0 16px;
+  color: #7a3f36;
+  background: #f1e6e2;
+  border: 1px solid #dfc8c1;
+  border-radius: 9px;
+  font-size: 0.7rem;
+}
+
+.delete-history-button:hover {
+  background: #ead8d2;
+}
+
+.workout-grid.is-read-only .exercise-completion,
+.workout-grid.is-read-only .exercise-logger-content {
+  opacity: 0.72;
+}
+
 .workout-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1347,6 +1613,28 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .history-card > details > summary {
+    align-items: flex-start;
+  }
+
+  .history-card-summary {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .history-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .history-metrics div:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .history-metrics div:nth-child(4) {
+    border-top: 1px solid var(--line);
+  }
+
   .exercise-dialog-shell {
     grid-template-columns: 1fr;
   }
@@ -1411,6 +1699,32 @@ footer {
 
   .results {
     padding-top: 58px;
+  }
+
+  .workout-history {
+    padding-top: 58px;
+  }
+
+  .history-heading {
+    align-items: flex-start;
+  }
+
+  .history-card > details > summary {
+    min-height: 84px;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .history-card-content {
+    padding: 0 16px 18px;
+  }
+
+  .history-metrics {
+    margin-inline: -16px;
+  }
+
+  .history-metrics div {
+    padding: 14px 16px;
   }
 
   .workout-progress-copy {

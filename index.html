@@ -175,6 +175,9 @@
             aria-live="polite"
             hidden
           >Workout completed! Great job.</p>
+          <button id="finishWorkoutButton" class="finish-workout-button" type="button">
+            Finish workout
+          </button>
         </div>
 
         <div id="workoutList" class="workout-grid">
@@ -186,6 +189,23 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section
+        id="workoutHistory"
+        class="workout-history"
+        aria-labelledby="workout-history-title"
+        hidden
+      >
+        <div class="history-heading">
+          <div>
+            <p class="eyebrow">TRAINING LOG</p>
+            <h2 id="workout-history-title">Workout history</h2>
+          </div>
+          <span id="workoutHistoryCount" class="history-count"></span>
+        </div>
+        <p id="workoutHistoryMessage" class="history-message" aria-live="polite"></p>
+        <div id="workoutHistoryList" class="workout-history-list"></div>
       </section>
     </main>
 

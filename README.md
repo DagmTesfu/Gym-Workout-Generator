@@ -8,6 +8,9 @@ A responsive gym workout generator that creates a focused session from a user's 
 - Foundational and technical movement filtering.
 - Strength, muscle-building, and athletic training goals.
 - Exercise cards with sets, reps, difficulty, and relevant exercise imagery.
+- Synchronized exercise and set completion with weight, reps, RPE, and notes.
+- Recoverable active-workout drafts with an elapsed workout timer.
+- Persistent complete and partial workout history with volume summaries.
 - Responsive layout for desktop, tablet, and mobile screens.
 - Animated session-ready feedback when a workout is generated.
 - Optimized local exercise images with lazy loading and Netlify cache headers.
@@ -27,7 +30,9 @@ The frontend has no build step. Use the included Node server so online recommend
 .
 |-- index.html                  # Page structure and form controls
 |-- style.css                   # Responsive visual design and animations
-|-- app.js                      # Workout data, filtering, and rendering logic
+|-- app.js                      # Saved workout catalog and exercise details
+|-- index.js                    # Workout generation, logging, and UI behavior
+|-- workout-log.js              # Versioned active-draft and history storage
 |-- assets/
 |   |-- exercises-web/          # Optimized exercise images used by the site
 |   `-- exercise-sprite-web.jpg # Optimized hero artwork
