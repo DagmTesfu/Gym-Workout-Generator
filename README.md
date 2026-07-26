@@ -4,7 +4,7 @@ A responsive gym workout generator that creates a focused session from a user's 
 
 ## Features
 
-- 84 saved workouts plus live recommendations across nine body areas.
+- 85 saved workouts plus live recommendations across nine body areas.
 - Foundational and technical movement filtering.
 - Strength, muscle-building, and athletic training goals.
 - Exercise cards with sets, reps, difficulty, and relevant exercise imagery.

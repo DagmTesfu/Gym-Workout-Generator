@@ -40,6 +40,10 @@ const apiBodyPartBySelection = {
 // These legacy variants have safer alternatives with the same training benefit.
 const excludedExercisePattern =
   /behind[- ]the[- ]neck|behind neck|partner leg throw|squat(?:ting)? on (?:a )?(?:stability )?ball|jump(?:ing)? on stacked plates/i;
+const lowValueApiPattern =
+  /\bvariation\b|with classic|\bimpossible\b|deep smith machine reverse decline|barbell bench squat|squat \(on knees\)/i;
+const establishedMovementPattern =
+  /press|row|pulldown|pull-down|pull-up|chin-up|curl|extension|raise|squat|lunge|deadlift|hip thrust|fly|push-up|dip/i;
 
 // ExerciseDB muscle names do not exactly match the labels used by the form.
 const bodyAreaByMuscle = {
@@ -264,11 +268,12 @@ async function generateWorkout() {
 
   // Convert API records and assign the difficulty data that ExerciseDB omits.
   const apiWorkouts = exercises.map(function (exercise) {
-    const muscles = [
-      ...(exercise.targetMuscles || []),
-      ...(exercise.secondaryMuscles || []),
-      ...(exercise.bodyParts || [])
-    ];
+    const primaryTargets = (exercise.targetMuscles || []).map(function (muscle) {
+      return bodyAreaByMuscle[muscle.toLowerCase()];
+    }).filter(Boolean);
+    const bodyPartTargets = (exercise.bodyParts || []).map(function (bodyPart) {
+      return bodyAreaByMuscle[bodyPart.toLowerCase()];
+    }).filter(Boolean);
     const equipmentText = (exercise.equipments || []).join(" ").toLowerCase();
     const name = exercise.name || "Unnamed exercise";
     const isFoundationalEquipment =
@@ -281,9 +286,8 @@ async function generateWorkout() {
 
     return {
       name,
-      target: muscles.map(function (muscle) {
-        return bodyAreaByMuscle[muscle.toLowerCase()];
-      }).filter(Boolean),
+      // Secondary muscles belong in details, not in primary-area filtering.
+      target: primaryTargets.length > 0 ? primaryTargets : bodyPartTargets,
       goal: goals,
       difficulty: isFoundationalEquipment ? "Foundational" : "Technical",
       equipment: getEquipmentCategories(equipmentText, name),
@@ -301,7 +305,10 @@ async function generateWorkout() {
     };
 
   }).filter(function (workout) {
-    return !excludedExercisePattern.test(workout.name);
+    return (
+      !excludedExercisePattern.test(workout.name) &&
+      !lowValueApiPattern.test(workout.name)
+    );
   });
 
   // Normalize the saved app.js workouts to the same card shape.
@@ -426,6 +433,9 @@ async function generateWorkout() {
   const savedCandidates = [...exactSavedWorkouts, ...adaptableSavedWorkouts];
   const apiCandidates = [...apiByName.values()].filter(function (workout) {
     return matchesCoreSelection(workout) && workout.goal.includes(selectedGoal);
+  }).sort(function (first, second) {
+    return Number(establishedMovementPattern.test(second.name)) -
+      Number(establishedMovementPattern.test(first.name));
   });
 
   const sessionSizeByDuration = { "20": 4, "30": 6, "45": 8, "60": 10 };

@@ -425,7 +425,7 @@ const workouts = [
 },
 {
     name: "Bulgarian Split Squat",
-    target: "Legs / Quadriceps",
+    target: "Legs / Quadriceps and Glutes",
     goal: ["muscle", "Athletic", "Strength"],
     difficulty: ["Intermediate"],
     sets: 3,
@@ -534,14 +534,6 @@ const workouts = [
     difficulty: ["Beginner"],
     sets: 3,
     reps: 15
-},
-{
-    name: "Bulgarian Split Squat",
-    target: "Glutes",
-    goal: ["muscle", "Athletic", "Strength"],
-    difficulty: ["Intermediate"],
-    sets: 3,
-    reps: 10
 },
 {
     name: "Sumo Deadlift",
@@ -676,6 +668,40 @@ const workouts = [
     reps: 10,
     image: "https://static.exercisedb.dev/media/7I6LNUG.gif"
 },
+{
+    name: "Bayesian Cable Curl",
+    target: "Biceps",
+    goal: ["muscle"],
+    difficulty: ["Intermediate"],
+    sets: 3,
+    reps: 12,
+    image: "https://static.exercisedb.dev/media/G08RZcQ.gif",
+    targetMuscles: ["biceps"],
+    secondaryMuscles: ["forearms"],
+    equipmentDetails: ["cable machine", "single handle"],
+    instructions: [
+      "Set a cable handle near the floor and stand one step in front of it, facing away from the stack.",
+      "Hold the handle with your arm slightly behind your torso and keep your shoulder still.",
+      "Curl the handle toward your shoulder, squeeze the biceps, then lower it under control."
+    ]
+},
+{
+    name: "Single-Arm Cable Triceps Extension",
+    target: "Triceps",
+    goal: ["muscle"],
+    difficulty: ["Beginner"],
+    sets: 3,
+    reps: 12,
+    image: "https://static.exercisedb.dev/media/Gchi5Tr.gif",
+    targetMuscles: ["triceps"],
+    secondaryMuscles: ["forearms"],
+    equipmentDetails: ["cable machine", "single handle"],
+    instructions: [
+      "Set the cable above head height and stand square to the machine.",
+      "Pin your working elbow beside your torso with the forearm bent.",
+      "Extend the elbow until the arm is straight, pause, then return slowly without moving the upper arm."
+    ]
+},
 
 ];
 
@@ -760,6 +786,148 @@ const exerciseImages = {
   "Donkey Calf Raise Machine": "assets/exercises/donkey-calf-raise-machine.jpg",
   "Seated Dumbbell Calf Raise": "assets/exercises/seated-dumbbell-calf-raise.jpg"
 };
+
+// Complete detail records for saved movements whose names do not map cleanly
+// to the local Free Exercise DB. These fields power the View Details dialog.
+const savedExerciseDetails = {
+  "Pull-Up": {
+    equipmentDetails: ["pull-up bar"]
+  },
+  "Bulgarian Split Squat": {
+    equipmentDetails: ["bench", "optional dumbbells"]
+  },
+  "Reverse Lunge": {
+    equipmentDetails: ["body weight", "optional dumbbells"]
+  },
+  "Dips": {
+    targetMuscles: ["pectorals", "triceps"], secondaryMuscles: ["front deltoids"], equipmentDetails: ["parallel bars"],
+    instructions: ["Support yourself on parallel bars with the shoulders down and chest slightly forward.", "Bend the elbows and lower until the upper arms are about parallel with the floor.", "Press through the bars to return without shrugging the shoulders."]
+  },
+  "Chest-Supported Row": {
+    targetMuscles: ["upper back", "lats"], secondaryMuscles: ["biceps", "rear deltoids"], equipmentDetails: ["chest-supported row machine"],
+    instructions: ["Adjust the pad so your chest stays supported and grasp the handles.", "Pull the handles toward your lower ribs while drawing the shoulder blades together.", "Pause briefly, then extend the arms under control without lifting the chest."]
+  },
+  "Barbell Bent-Over Row": {
+    targetMuscles: ["lats", "upper back"], secondaryMuscles: ["biceps", "rear deltoids", "spinal erectors"], equipmentDetails: ["barbell"],
+    instructions: ["Hinge at the hips with a neutral spine and hold the bar below the knees.", "Brace your trunk and row the bar toward the lower ribs.", "Lower the bar under control while maintaining the same torso angle."]
+  },
+  "Chest-Supported Dumbbell Row": {
+    targetMuscles: ["upper back", "lats"], secondaryMuscles: ["biceps", "rear deltoids"], equipmentDetails: ["dumbbells", "incline bench"],
+    instructions: ["Lie chest-down on an incline bench with a dumbbell in each hand.", "Row both dumbbells toward the hips while keeping the chest on the pad.", "Lower until the arms are long without letting the shoulders roll forward."]
+  },
+  "Straight-Arm Cable Pulldown": {
+    targetMuscles: ["lats"], secondaryMuscles: ["teres major", "triceps"], equipmentDetails: ["cable machine", "straight bar"],
+    instructions: ["Set a cable above head height and hold the bar with nearly straight arms.", "Brace your torso and sweep the bar down toward the thighs.", "Return slowly until the lats are stretched without bending the elbows significantly."]
+  },
+  "Incline Barbell Bench Press": {
+    targetMuscles: ["upper pectorals"], secondaryMuscles: ["triceps", "front deltoids"], equipmentDetails: ["barbell", "incline bench", "rack"],
+    instructions: ["Set the bench to a low incline and plant both feet firmly.", "Unrack the bar and lower it toward the upper chest with stacked wrists.", "Press upward and slightly back until the elbows are extended."]
+  },
+  "Chest Press Machine": {
+    targetMuscles: ["pectorals"], secondaryMuscles: ["triceps", "front deltoids"], equipmentDetails: ["chest press machine"],
+    instructions: ["Adjust the seat so the handles align with mid-chest.", "Keep your back against the pad and press the handles forward.", "Return until the chest is comfortably stretched without letting the weight stack slam."]
+  },
+  "Pec Deck Fly": {
+    targetMuscles: ["pectorals"], secondaryMuscles: ["front deltoids"], equipmentDetails: ["pec deck machine"],
+    instructions: ["Adjust the seat so the elbows or handles align with the chest.", "Bring the arms together in a wide hugging motion without shrugging.", "Open the arms slowly to a comfortable chest stretch."]
+  },
+  "Cable Chest Fly": {
+    targetMuscles: ["pectorals"], secondaryMuscles: ["front deltoids", "serratus anterior"], equipmentDetails: ["dual cable machine", "handles"],
+    instructions: ["Stand between two pulleys with a staggered stance and soft elbows.", "Bring the handles together in front of the chest while keeping the torso still.", "Open the arms under control until the chest is comfortably stretched."]
+  },
+  "Dumbbell Chest Fly": {
+    targetMuscles: ["pectorals"], secondaryMuscles: ["front deltoids"], equipmentDetails: ["dumbbells", "flat bench"],
+    instructions: ["Lie on a bench with the dumbbells above the chest and elbows softly bent.", "Lower the arms in a wide arc until a comfortable chest stretch is reached.", "Reverse the arc and bring the dumbbells together without turning it into a press."]
+  },
+  "Barbell Overhead Press": {
+    targetMuscles: ["deltoids"], secondaryMuscles: ["triceps", "upper chest", "trapezius"], equipmentDetails: ["barbell", "rack"],
+    instructions: ["Hold the bar at upper-chest height with the forearms nearly vertical.", "Brace the trunk and press the bar overhead while moving the head slightly back.", "Finish with the bar stacked over the shoulders, then lower under control."]
+  },
+  "Shoulder Press Machine": {
+    targetMuscles: ["deltoids"], secondaryMuscles: ["triceps", "upper chest"], equipmentDetails: ["shoulder press machine"],
+    instructions: ["Adjust the seat so the handles begin around shoulder height.", "Keep the back supported and press overhead without shrugging.", "Lower the handles slowly until the elbows reach a comfortable depth."]
+  },
+  "Dumbbell Lateral Raise": {
+    targetMuscles: ["side deltoids"], secondaryMuscles: ["upper trapezius"], equipmentDetails: ["dumbbells"],
+    instructions: ["Stand tall with dumbbells by your sides and elbows softly bent.", "Raise the arms out to the sides until they approach shoulder height.", "Lower slowly and avoid swinging the torso or shrugging."]
+  },
+  "Cable Lateral Raise": {
+    targetMuscles: ["side deltoids"], secondaryMuscles: ["upper trapezius"], equipmentDetails: ["cable machine", "single handle"],
+    instructions: ["Set the cable low and hold the handle with the outside hand.", "Lead with the elbow and raise the arm out to shoulder height.", "Lower across the body under control while keeping the torso still."]
+  },
+  "Rear Delt Fly Machine": {
+    targetMuscles: ["rear deltoids"], secondaryMuscles: ["rhomboids", "middle trapezius"], equipmentDetails: ["reverse pec deck machine"],
+    instructions: ["Face the pad and adjust the handles to begin with arms forward.", "Open the arms wide while keeping the chest supported and shoulders down.", "Return slowly without letting the weight stack pull the shoulders forward."]
+  },
+  "Dumbbell Rear Delt Fly": {
+    targetMuscles: ["rear deltoids"], secondaryMuscles: ["rhomboids", "middle trapezius"], equipmentDetails: ["dumbbells"],
+    instructions: ["Hinge at the hips with a neutral spine and let the dumbbells hang.", "Raise the arms out and slightly back with soft elbows.", "Lower slowly without using momentum or extending the lower back."]
+  },
+  "Overhead Cable Triceps Extension": {
+    targetMuscles: ["triceps"], secondaryMuscles: ["forearms"], equipmentDetails: ["cable machine", "rope attachment"],
+    instructions: ["Face away from a high cable with the rope behind your head.", "Keep the elbows pointed forward and extend the arms overhead.", "Bend the elbows slowly to return while keeping the upper arms still."]
+  },
+  "Triceps Extension Machine": {
+    targetMuscles: ["triceps"], secondaryMuscles: ["forearms"], equipmentDetails: ["triceps extension machine"],
+    instructions: ["Adjust the seat and arm pad so the elbows align with the machine pivot.", "Extend the elbows until the arms are nearly straight.", "Return the handles slowly without lifting the elbows from the pad."]
+  },
+  "Barbell Back Squat": {
+    targetMuscles: ["quadriceps", "glutes"], secondaryMuscles: ["hamstrings", "adductors", "core"], equipmentDetails: ["barbell", "squat rack"],
+    instructions: ["Set the bar securely across the upper back and step out with a stable stance.", "Brace the trunk and sit down between the hips while the knees track over the feet.", "Drive through the whole foot to stand while keeping the chest controlled."]
+  },
+  "Dumbbell Walking Lunge": {
+    targetMuscles: ["quadriceps", "glutes"], secondaryMuscles: ["hamstrings", "calves", "core"], equipmentDetails: ["dumbbells"],
+    instructions: ["Stand tall with a dumbbell in each hand and take a controlled step forward.", "Lower until both knees are comfortably bent and the front foot stays planted.", "Push through the front foot, bring the rear leg through, and repeat on the other side."]
+  },
+  "Barbell Stiff-Leg Deadlift": {
+    targetMuscles: ["hamstrings"], secondaryMuscles: ["glutes", "spinal erectors"], equipmentDetails: ["barbell"],
+    instructions: ["Hold the bar at the thighs with knees softly bent and feet hip-width apart.", "Push the hips back and lower the bar close to the legs with a neutral spine.", "Stop at a strong hamstring stretch, then extend the hips to stand."]
+  },
+  "Smith Machine Hip Thrust": {
+    targetMuscles: ["glutes"], secondaryMuscles: ["hamstrings", "adductors"], equipmentDetails: ["Smith machine", "bench", "bar pad"],
+    instructions: ["Place the upper back on a bench and position the padded Smith bar over the hips.", "Plant the feet and drive the hips upward while keeping the ribs controlled.", "Squeeze the glutes at the top, then lower the hips slowly."]
+  },
+  "Dumbbell Hip Thrust": {
+    targetMuscles: ["glutes"], secondaryMuscles: ["hamstrings", "adductors"], equipmentDetails: ["dumbbell", "bench"],
+    instructions: ["Rest the upper back on a bench and place a padded dumbbell across the hips.", "Drive through the feet to lift the hips until the torso is level.", "Pause with the glutes contracted, then lower under control."]
+  },
+  "Hip Abduction Machine": {
+    targetMuscles: ["gluteus medius", "gluteus minimus"], secondaryMuscles: ["tensor fasciae latae"], equipmentDetails: ["hip abduction machine"],
+    instructions: ["Sit with the outer thighs against the pads and keep the pelvis stable.", "Press the knees outward through a comfortable range.", "Pause briefly, then return slowly without letting the weight stack slam."]
+  },
+  "Single-Leg Calf Raise": {
+    targetMuscles: ["gastrocnemius", "soleus"], secondaryMuscles: ["foot stabilizers"], equipmentDetails: ["raised step", "optional support"],
+    instructions: ["Stand on one forefoot at the edge of a stable step and hold support if needed.", "Lower the heel under control, then rise as high as comfortable.", "Pause at the top and complete all repetitions before changing sides."]
+  },
+  "Seated Dumbbell Calf Raise": {
+    targetMuscles: ["soleus"], secondaryMuscles: ["gastrocnemius"], equipmentDetails: ["dumbbells", "bench", "raised step"],
+    instructions: ["Sit with the forefeet on a raised surface and dumbbells secured above the knees.", "Lower the heels under control to stretch the calves.", "Press through the balls of the feet and raise the heels as high as comfortable."]
+  },
+  "Pendulum Squat Machine": {
+    targetMuscles: ["quadriceps", "glutes"], secondaryMuscles: ["adductors", "hamstrings"], equipmentDetails: ["pendulum squat machine"],
+    instructions: ["Set the shoulder pads and foot position so the back remains supported.", "Unlock the machine and descend while the knees track in line with the feet.", "Drive through the platform to stand without forcefully locking the knees."]
+  },
+  "Hip Thrust Machine": {
+    targetMuscles: ["glutes"], secondaryMuscles: ["hamstrings", "adductors"], equipmentDetails: ["hip thrust machine"],
+    instructions: ["Adjust the back support and secure the machine pad or belt across the hips.", "Drive through the feet and extend the hips while keeping the ribs down.", "Squeeze the glutes at full extension, then lower under control."]
+  },
+  "Plate-Loaded Iso-Lateral Row": {
+    targetMuscles: ["lats", "upper back"], secondaryMuscles: ["biceps", "rear deltoids"], equipmentDetails: ["plate-loaded iso-lateral row machine"],
+    instructions: ["Adjust the seat so the chest is supported and load both sides evenly.", "Pull the handles toward the torso while keeping the shoulders away from the ears.", "Extend the arms slowly and let the shoulder blades move naturally forward."]
+  },
+  "Lever Chest Press": {
+    targetMuscles: ["pectorals"], secondaryMuscles: ["triceps", "front deltoids"], equipmentDetails: ["lever chest press machine"],
+    instructions: ["Adjust the seat so the handles align with mid-chest.", "Keep the shoulder blades supported and press the handles forward.", "Return slowly until the chest is comfortably stretched."]
+  },
+  "Lever Seated Row": {
+    targetMuscles: ["lats", "upper back"], secondaryMuscles: ["biceps", "rear deltoids"], equipmentDetails: ["lever seated row machine"],
+    instructions: ["Adjust the seat and chest pad, then grasp the handles with long arms.", "Row toward the ribs while drawing the shoulder blades back and down.", "Return under control without rocking the torso."]
+  }
+};
+
+workouts.forEach(function (workout) {
+  Object.assign(workout, savedExerciseDetails[workout.name] || {});
+});
 
 // Expose the logged catalog to index.js without running a second app.
 window.loggedWorkouts = workouts;
