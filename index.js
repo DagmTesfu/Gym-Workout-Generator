@@ -31,6 +31,7 @@ const apiExercisesByBodyPart = new Map();
 let localExerciseDetailsPromise;
 let displayedWorkouts = [];
 let replacementCandidates = [];
+const workoutLogState = new Map();
 
 const apiBodyPartBySelection = {
   Back: "back",
@@ -144,6 +145,174 @@ function getEquipmentCategories(equipmentText, exerciseName) {
 }
 
 
+// Session logging stays separate from saved and API catalog records.
+function createExerciseLogState(workout) {
+  const plannedSetCount = Math.max(1, Number.parseInt(workout.sets, 10) || 1);
+  const plannedReps = String(workout.reps ?? "");
+
+  return {
+    completed: false,
+    dirty: false,
+    notes: "",
+    nextSetId: plannedSetCount + 1,
+    sets: Array.from({ length: plannedSetCount }, function (_, index) {
+      return {
+        id: index + 1,
+        weight: "",
+        actualReps: plannedReps,
+        rpe: "",
+        completed: false
+      };
+    })
+  };
+}
+
+
+function initializeWorkoutLogState(workouts) {
+  workoutLogState.clear();
+  workouts.forEach(function (workout, index) {
+    workoutLogState.set(index, createExerciseLogState(workout));
+  });
+}
+
+
+function hasEnteredWorkoutData() {
+  return [...workoutLogState.values()].some(function (exerciseLog) {
+    return exerciseLog.dirty;
+  });
+}
+
+
+function getExerciseLogState(workout, cardIndex) {
+  if (!workoutLogState.has(cardIndex)) {
+    workoutLogState.set(cardIndex, createExerciseLogState(workout));
+  }
+  return workoutLogState.get(cardIndex);
+}
+
+
+function buildSetRow(set, setIndex, cardIndex, canRemove) {
+  const safeWeight = escapeHtml(set.weight);
+  const safeReps = escapeHtml(set.actualReps);
+  const safeRpe = escapeHtml(set.rpe);
+  const checkedAttribute = set.completed ? " checked" : "";
+  const disabledAttribute = canRemove ? "" : " disabled";
+
+  return `
+    <div class="set-log-row" data-set-id="${set.id}">
+      <span class="set-log-number">${setIndex + 1}</span>
+      <label class="set-log-field">
+        <span>kg</span>
+        <input
+          class="set-log-input"
+          type="number"
+          min="0"
+          step="any"
+          inputmode="decimal"
+          value="${safeWeight}"
+          data-workout-index="${cardIndex}"
+          data-set-id="${set.id}"
+          data-log-field="weight"
+          aria-label="Set ${setIndex + 1} weight in kilograms"
+        >
+      </label>
+      <label class="set-log-field">
+        <span>Reps</span>
+        <input
+          class="set-log-input"
+          type="number"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          value="${safeReps}"
+          data-workout-index="${cardIndex}"
+          data-set-id="${set.id}"
+          data-log-field="actualReps"
+          aria-label="Set ${setIndex + 1} actual repetitions"
+        >
+      </label>
+      <label class="set-log-field">
+        <span>RPE</span>
+        <input
+          class="set-log-input"
+          type="number"
+          min="1"
+          max="10"
+          step="0.5"
+          inputmode="decimal"
+          value="${safeRpe}"
+          data-workout-index="${cardIndex}"
+          data-set-id="${set.id}"
+          data-log-field="rpe"
+          aria-label="Set ${setIndex + 1} optional RPE from 1 to 10"
+        >
+      </label>
+      <label class="set-log-done">
+        <input
+          class="set-complete-checkbox"
+          type="checkbox"
+          data-workout-index="${cardIndex}"
+          data-set-id="${set.id}"
+          aria-label="Mark set ${setIndex + 1} complete"${checkedAttribute}
+        >
+        <span>Done</span>
+      </label>
+      <button
+        class="remove-set-button"
+        type="button"
+        data-workout-index="${cardIndex}"
+        data-set-id="${set.id}"
+        aria-label="Remove set ${setIndex + 1}"${disabledAttribute}
+      >&times;</button>
+    </div>
+  `;
+}
+
+
+function buildExerciseLogger(workout, cardIndex) {
+  const exerciseLog = getExerciseLogState(workout, cardIndex);
+  const completedSets = exerciseLog.sets.filter(function (set) {
+    return set.completed;
+  }).length;
+  const canRemove = exerciseLog.sets.length > 1;
+  const setRows = exerciseLog.sets.map(function (set, index) {
+    return buildSetRow(set, index, cardIndex, canRemove);
+  }).join("");
+
+  return `
+    <details class="exercise-logger" data-workout-index="${cardIndex}">
+      <summary>
+        <span>Log sets</span>
+        <span class="logger-status">${completedSets} / ${exerciseLog.sets.length} done</span>
+      </summary>
+      <div class="exercise-logger-content">
+        <div class="set-log-heading" aria-hidden="true">
+          <span>Set</span><span>kg</span><span>Reps</span><span>RPE</span><span>Done</span><span></span>
+        </div>
+        <div class="set-log-list">${setRows}</div>
+        <button
+          class="add-set-button"
+          type="button"
+          data-workout-index="${cardIndex}"
+        >+ Add set</button>
+        <label class="exercise-notes-label" for="exercise-notes-${cardIndex}">
+          <span>Exercise notes</span>
+          <textarea
+            id="exercise-notes-${cardIndex}"
+            class="exercise-notes"
+            rows="2"
+            maxlength="500"
+            data-workout-index="${cardIndex}"
+            data-log-field="notes"
+            placeholder="Form cues, adjustments, or how the exercise felt"
+          >${escapeHtml(exerciseLog.notes)}</textarea>
+        </label>
+      </div>
+    </details>
+  `;
+}
+
+
 // Recount the rendered checkboxes so progress always reflects the visible workout.
 function updateWorkoutProgress() {
   const exerciseCheckboxes = workoutList.querySelectorAll(
@@ -172,9 +341,98 @@ function updateWorkoutProgress() {
 }
 
 
+function updateLoggerStatus(cardIndex) {
+  const exerciseLog = workoutLogState.get(cardIndex);
+  const status = workoutList.querySelector(
+    `.exercise-logger[data-workout-index="${cardIndex}"] .logger-status`
+  );
+  if (!exerciseLog || !status) {
+    return;
+  }
+
+  const completedSets = exerciseLog.sets.filter(function (set) {
+    return set.completed;
+  }).length;
+  status.textContent = `${completedSets} / ${exerciseLog.sets.length} done`;
+}
+
+
+function synchronizeExerciseCompletion(cardIndex) {
+  const exerciseLog = workoutLogState.get(cardIndex);
+  const exerciseCheckbox = workoutList.querySelector(
+    `.exercise-complete-checkbox[data-workout-index="${cardIndex}"]`
+  );
+  if (!exerciseLog || !exerciseCheckbox) {
+    return;
+  }
+
+  const completedSets = exerciseLog.sets.filter(function (set) {
+    return set.completed;
+  }).length;
+  const allSetsCompleted = completedSets === exerciseLog.sets.length;
+  const someSetsCompleted = completedSets > 0 && !allSetsCompleted;
+
+  exerciseLog.completed = allSetsCompleted;
+  exerciseCheckbox.checked = allSetsCompleted;
+  exerciseCheckbox.indeterminate = someSetsCompleted;
+  updateLoggerStatus(cardIndex);
+  updateWorkoutProgress();
+}
+
+
+function setAllExerciseSetsCompleted(cardIndex, completed) {
+  const exerciseLog = workoutLogState.get(cardIndex);
+  if (!exerciseLog) {
+    return;
+  }
+
+  exerciseLog.dirty = true;
+  exerciseLog.completed = completed;
+  exerciseLog.sets.forEach(function (set) {
+    set.completed = completed;
+  });
+
+  workoutList.querySelectorAll(
+    `.set-complete-checkbox[data-workout-index="${cardIndex}"]`
+  ).forEach(function (checkbox) {
+    checkbox.checked = completed;
+  });
+
+  const exerciseCheckbox = workoutList.querySelector(
+    `.exercise-complete-checkbox[data-workout-index="${cardIndex}"]`
+  );
+  if (exerciseCheckbox) {
+    exerciseCheckbox.checked = completed;
+    exerciseCheckbox.indeterminate = false;
+  }
+
+  updateLoggerStatus(cardIndex);
+  updateWorkoutProgress();
+}
+
+
+function replaceExerciseLogger(cardIndex) {
+  const workout = displayedWorkouts[cardIndex];
+  const currentLogger = workoutList.querySelector(
+    `.exercise-logger[data-workout-index="${cardIndex}"]`
+  );
+  if (!workout || !currentLogger) {
+    return;
+  }
+
+  const wasOpen = currentLogger.open;
+  const loggerTemplate = document.createElement("template");
+  loggerTemplate.innerHTML = buildExerciseLogger(workout, cardIndex).trim();
+  const newLogger = loggerTemplate.content.firstElementChild;
+  newLogger.open = wasOpen;
+  currentLogger.replaceWith(newLogger);
+}
+
+
 function resetWorkoutProgress() {
   workoutList.querySelectorAll(".exercise-complete-checkbox").forEach(function (checkbox) {
     checkbox.checked = false;
+    checkbox.indeterminate = false;
   });
   workoutProgressText.textContent = "Workout Progress: 0 of 0 completed";
   workoutProgressPercent.textContent = "0%";
@@ -188,6 +446,7 @@ function resetWorkoutProgress() {
 
 // Build one card so initial rendering and single-card replacement stay identical.
 function buildExerciseCard(workout, cardIndex) {
+  const exerciseLog = getExerciseLogState(workout, cardIndex);
   const safeName = escapeHtml(workout.name);
   const safeImage = escapeHtml(workout.image);
   const safeTarget = escapeHtml(workout.target.join(" / "));
@@ -197,6 +456,7 @@ function buildExerciseCard(workout, cardIndex) {
   const mediaLabel = /\.gif(?:$|\?)/i.test(workout.image)
     ? "Animated demo"
     : "Exercise photo";
+  const checkedAttribute = exerciseLog.completed ? " checked" : "";
 
   return `
     <article
@@ -231,10 +491,11 @@ function buildExerciseCard(workout, cardIndex) {
             class="exercise-complete-checkbox"
             type="checkbox"
             data-workout-index="${cardIndex}"
-            aria-label="Mark ${safeName} as complete"
+            aria-label="Mark ${safeName} as complete"${checkedAttribute}
           >
           <span>Mark as complete</span>
         </label>
+        ${buildExerciseLogger(workout, cardIndex)}
         <div class="exercise-actions">
           <button
             class="replace-button"
@@ -304,10 +565,19 @@ function replaceDisplayedWorkout(cardIndex) {
     return;
   }
 
+  const currentLog = workoutLogState.get(cardIndex);
+  if (
+    currentLog?.dirty &&
+    !window.confirm(`Replace ${currentWorkout.name} and discard its set log?`)
+  ) {
+    return;
+  }
+
   const replacement = possibleReplacements[
     Math.floor(Math.random() * possibleReplacements.length)
   ];
   displayedWorkouts[cardIndex] = replacement;
+  workoutLogState.set(cardIndex, createExerciseLogState(replacement));
   errorMessage.textContent = "";
 
   // Replace only the selected article; every other workout card remains untouched.
@@ -442,10 +712,18 @@ async function generateWorkout() {
     return;
   }
 
+  if (
+    hasEnteredWorkoutData() &&
+    !window.confirm("Generate a new workout and discard the current set log?")
+  ) {
+    return;
+  }
+
   errorMessage.textContent = "";
   resetWorkoutProgress();
   displayedWorkouts = [];
   replacementCandidates = [];
+  workoutLogState.clear();
   workoutList.innerHTML = `
     <div class="empty-state">
       <span class="empty-icon" aria-hidden="true">&hellip;</span>
@@ -678,6 +956,7 @@ async function generateWorkout() {
   if (totalMatches === 0) {
     displayedWorkouts = [];
     replacementCandidates = [];
+    workoutLogState.clear();
     resetWorkoutProgress();
     workoutList.innerHTML = `
       <div class="empty-state">
@@ -690,6 +969,9 @@ async function generateWorkout() {
     `;
     return;
   }
+
+  displayedWorkouts = [...filteredSavedWorkouts, ...filteredApiWorkouts];
+  initializeWorkoutLogState(displayedWorkouts);
 
   const savedSection = filteredSavedWorkouts.length > 0
     ? `
@@ -712,7 +994,6 @@ async function generateWorkout() {
     ${buildCards(filteredApiWorkouts, filteredSavedWorkouts.length)}
   `;
 
-  displayedWorkouts = [...filteredSavedWorkouts, ...filteredApiWorkouts];
   workoutList.innerHTML = savedSection + apiSection;
   updateWorkoutProgress();
 }
@@ -764,6 +1045,13 @@ function showExerciseDetails(workout) {
 
 
 function clearWorkout() {
+  if (
+    hasEnteredWorkoutData() &&
+    !window.confirm("Clear this workout and discard the current set log?")
+  ) {
+    return;
+  }
+
   goalSelect.value = "";
   bodyAreaSelect.value = "";
   difficultySelect.value = "";
@@ -772,6 +1060,7 @@ function clearWorkout() {
   errorMessage.textContent = "";
   displayedWorkouts = [];
   replacementCandidates = [];
+  workoutLogState.clear();
   resetWorkoutProgress();
 
   if (exerciseDialog.open) {
@@ -794,6 +1083,47 @@ generateButton.addEventListener("click", generateWorkout);
 clearButton.addEventListener("click", clearWorkout);
 
 workoutList.addEventListener("click", function (event) {
+  const addSetButton = event.target.closest(".add-set-button");
+  if (addSetButton) {
+    const cardIndex = Number(addSetButton.dataset.workoutIndex);
+    const exerciseLog = workoutLogState.get(cardIndex);
+    const workout = displayedWorkouts[cardIndex];
+    if (!exerciseLog || !workout) {
+      return;
+    }
+
+    exerciseLog.sets.push({
+      id: exerciseLog.nextSetId,
+      weight: "",
+      actualReps: String(workout.reps ?? ""),
+      rpe: "",
+      completed: false
+    });
+    exerciseLog.nextSetId += 1;
+    exerciseLog.dirty = true;
+    replaceExerciseLogger(cardIndex);
+    synchronizeExerciseCompletion(cardIndex);
+    return;
+  }
+
+  const removeSetButton = event.target.closest(".remove-set-button");
+  if (removeSetButton) {
+    const cardIndex = Number(removeSetButton.dataset.workoutIndex);
+    const setId = Number(removeSetButton.dataset.setId);
+    const exerciseLog = workoutLogState.get(cardIndex);
+    if (!exerciseLog || exerciseLog.sets.length <= 1) {
+      return;
+    }
+
+    exerciseLog.sets = exerciseLog.sets.filter(function (set) {
+      return set.id !== setId;
+    });
+    exerciseLog.dirty = true;
+    replaceExerciseLogger(cardIndex);
+    synchronizeExerciseCompletion(cardIndex);
+    return;
+  }
+
   const replaceButton = event.target.closest(".replace-button");
   if (replaceButton) {
     replaceDisplayedWorkout(Number(replaceButton.dataset.workoutIndex));
@@ -812,11 +1142,65 @@ workoutList.addEventListener("click", function (event) {
 });
 
 workoutList.addEventListener("change", function (event) {
-  if (!event.target.matches(".exercise-complete-checkbox")) {
+  if (event.target.matches(".exercise-complete-checkbox")) {
+    setAllExerciseSetsCompleted(
+      Number(event.target.dataset.workoutIndex),
+      event.target.checked
+    );
     return;
   }
 
-  updateWorkoutProgress();
+  if (event.target.matches(".set-complete-checkbox")) {
+    const cardIndex = Number(event.target.dataset.workoutIndex);
+    const setId = Number(event.target.dataset.setId);
+    const exerciseLog = workoutLogState.get(cardIndex);
+    const set = exerciseLog?.sets.find(function (candidate) {
+      return candidate.id === setId;
+    });
+    if (!set || !exerciseLog) {
+      return;
+    }
+
+    set.completed = event.target.checked;
+    exerciseLog.dirty = true;
+    synchronizeExerciseCompletion(cardIndex);
+    return;
+  }
+
+  if (event.target.matches(".set-log-input") && !event.target.checkValidity()) {
+    event.target.reportValidity();
+  }
+});
+
+workoutList.addEventListener("input", function (event) {
+  const field = event.target.dataset.logField;
+  if (!field) {
+    return;
+  }
+
+  const cardIndex = Number(event.target.dataset.workoutIndex);
+  const exerciseLog = workoutLogState.get(cardIndex);
+  if (!exerciseLog) {
+    return;
+  }
+
+  exerciseLog.dirty = true;
+  if (field === "notes") {
+    exerciseLog.notes = event.target.value;
+    return;
+  }
+
+  if (!event.target.checkValidity() && event.target.value !== "") {
+    return;
+  }
+
+  const setId = Number(event.target.dataset.setId);
+  const set = exerciseLog.sets.find(function (candidate) {
+    return candidate.id === setId;
+  });
+  if (set) {
+    set[field] = event.target.value;
+  }
 });
 
 closeExerciseDialogButton.addEventListener("click", function () {

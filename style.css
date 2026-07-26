@@ -760,6 +760,205 @@ button:focus-visible {
   accent-color: var(--dark);
 }
 
+.exercise-logger {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.exercise-logger summary {
+  min-height: 44px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 800;
+  list-style: none;
+}
+
+.exercise-logger summary::-webkit-details-marker {
+  display: none;
+}
+
+.exercise-logger summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 1rem;
+}
+
+.exercise-logger[open] summary::after {
+  content: "−";
+}
+
+.logger-status {
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.exercise-logger-content {
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.set-log-heading,
+.set-log-row {
+  display: grid;
+  grid-template-columns: 24px repeat(3, minmax(42px, 1fr)) 46px 32px;
+  gap: 6px;
+  align-items: end;
+}
+
+.set-log-heading {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.set-log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.set-log-number {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.set-log-field {
+  min-width: 0;
+}
+
+.set-log-field > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.set-log-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 5px;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid #c7c6bc;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.set-log-input:focus,
+.exercise-notes:focus {
+  border-color: var(--dark);
+  outline: 2px solid var(--lime);
+  outline-offset: 1px;
+}
+
+.set-log-input:invalid {
+  border-color: #b64b3d;
+}
+
+.set-log-done {
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.set-log-done input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--dark);
+}
+
+.set-log-done span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.remove-set-button {
+  width: 32px;
+  min-height: 36px;
+  padding: 0;
+  color: #7a3f36;
+  background: #f1e6e2;
+  border: 1px solid #dfc8c1;
+  border-radius: 7px;
+}
+
+.remove-set-button:hover:not(:disabled) {
+  background: #ead8d2;
+}
+
+.remove-set-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.add-set-button {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 10px;
+  color: var(--dark);
+  background: #ebeae3;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.7rem;
+}
+
+.add-set-button:hover {
+  background: #deddd4;
+}
+
+.exercise-notes-label {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.exercise-notes {
+  width: 100%;
+  min-height: 64px;
+  padding: 9px 10px;
+  resize: vertical;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid #c7c6bc;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-transform: none;
+}
+
 .exercise-actions {
   margin-top: 16px;
   display: grid;
