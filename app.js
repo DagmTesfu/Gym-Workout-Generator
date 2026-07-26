@@ -631,6 +631,51 @@ const workouts = [
     sets: 3,
     reps: 15
 },
+{
+    name: "Pendulum Squat Machine",
+    target: "Legs / Quadriceps",
+    goal: ["Strength", "muscle"],
+    difficulty: ["Intermediate"],
+    sets: 4,
+    reps: 8,
+    image: "assets/exercises-web/pendulum-squat-machine-generated.png"
+},
+{
+    name: "Hip Thrust Machine",
+    target: "Glutes",
+    goal: ["Strength", "muscle"],
+    difficulty: ["Beginner"],
+    sets: 3,
+    reps: 10,
+    image: "assets/exercises-web/hip-thrust-machine-generated.png"
+},
+{
+    name: "Plate-Loaded Iso-Lateral Row",
+    target: "Back",
+    goal: ["Strength", "muscle"],
+    difficulty: ["Intermediate"],
+    sets: 3,
+    reps: 10,
+    image: "assets/exercises-web/iso-lateral-row-machine-generated.png"
+},
+{
+    name: "Lever Chest Press",
+    target: "Chest and Triceps",
+    goal: ["Strength", "muscle"],
+    difficulty: ["Beginner"],
+    sets: 3,
+    reps: 10,
+    image: "https://static.exercisedb.dev/media/DOoWcnA.gif"
+},
+{
+    name: "Lever Seated Row",
+    target: "Back",
+    goal: ["Strength", "muscle"],
+    difficulty: ["Beginner"],
+    sets: 3,
+    reps: 10,
+    image: "https://static.exercisedb.dev/media/7I6LNUG.gif"
+},
 
 ];
 
@@ -706,7 +751,7 @@ const exerciseImages = {
   "Sumo Deadlift": "assets/exercises/sumo-deadlift.jpg",
   "Reverse Lunge": "assets/exercises/reverse-lunge.jpg",
   "Hip Abduction Machine": "assets/exercises/hip-abduction-machine.jpg",
-  "Standing Calf Raise Machine": "assets/exercises/standing-calf-raise-machine.jpg",
+  "Standing Calf Raise Machine": "assets/exercises-web/standing-calf-raise-machine-generated.png",
   "Seated Calf Raise Machine": "assets/exercises/seated-calf-raise-machine.jpg",
   "Leg Press Calf Raise": "assets/exercises/leg-press-calf-raise.jpg",
   "Smith Machine Calf Raise": "assets/exercises/smith-machine-calf-raise.jpg",
@@ -716,143 +761,6 @@ const exerciseImages = {
   "Seated Dumbbell Calf Raise": "assets/exercises/seated-dumbbell-calf-raise.jpg"
 };
 
-
-const goalSelect = document.getElementById("goal");
-const bodyAreaSelect = document.getElementById("bodyArea");
-const difficultySelect = document.getElementById("difficulty");
-
-const generateButton = document.getElementById("generateButton");
-const clearButton = document.getElementById("clearButton");
-
-const workoutList = document.getElementById("workoutList");
-const errorMessage = document.getElementById("errorMessage");
-const workoutAnimation = document.getElementById("workoutAnimation");
-const workoutResults = document.getElementById("workoutResults");
-
-
-function playWorkoutAnimation() {
-  generateButton.classList.add("is-working");
-  workoutAnimation.classList.remove("is-active");
-  void workoutAnimation.offsetWidth;
-  workoutAnimation.classList.add("is-active");
-
-  setTimeout(function () {
-    generateButton.classList.remove("is-working");
-    workoutAnimation.classList.remove("is-active");
-  }, 750);
-}
-
-
-function generateWorkout(){
-    const selectedGoal = goalSelect.value;
-    const selectedBodyArea = bodyAreaSelect.value;
-    const selectedDifficulty = difficultySelect.value;
-
-    //Validation
-
-    if(
-    selectedGoal === "" ||
-    selectedBodyArea ===""||
-    selectedDifficulty === ""
-    ){
-    errorMessage.textContent = "Please select all three options";
-    workoutList.innerHTML = "";
-    return;
-
-    }
-
-    errorMessage.textContent = "";
-    playWorkoutAnimation();
-
-    const filteredWorkouts = workouts.filter(function (workout) {
-      return (
-        workout.goal.includes(selectedGoal) &&
-        workout.target.includes(selectedBodyArea) &&
-        workout.difficulty.includes(selectedDifficulty)
-      );
-    });
-
-    displayWorkout(filteredWorkouts);
-    console.log(filteredWorkouts);
-
-    setTimeout(function () {
-      workoutResults.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 500);
-}
-
-
-function displayWorkout(workouts) {
-  workoutList.innerHTML = "";
-
-  if (workouts.length === 0) {
-    workoutList.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-icon" aria-hidden="true">!</span>
-        <div>
-          <strong>No exact match this time.</strong>
-          <p>Try changing your goal, body area, or experience level.</p>
-        </div>
-      </div>
-    `;
-
-    return;
-  }
-
-  workouts.forEach(function (workout, index) {
-    const imagePath = exerciseImages[workout.name]
-      .replace("assets/exercises/", "assets/exercises-web/")
-      .replace(/\.(jpg|png)$/, ".jpg");
-
-    workoutList.innerHTML += `
-      <article class="exercise-card" style="animation-delay: ${index * 55}ms">
-        <div class="exercise-visual">
-          <img
-            src="${imagePath}"
-            alt="${workout.name} exercise demonstration"
-            loading="${index < 3 ? "eager" : "lazy"}"
-            fetchpriority="${index < 3 ? "high" : "low"}"
-            decoding="async"
-          >
-          <span class="exercise-number">${String(index + 1).padStart(2, "0")}</span>
-        </div>
-
-        <div class="exercise-content">
-          <span class="exercise-target">${workout.target}</span>
-          <h3>${workout.name}</h3>
-
-          <div class="exercise-prescription">
-            <div><strong>${workout.sets}</strong><span>Sets</span></div>
-            <div><strong>${workout.reps}</strong><span>Reps</span></div>
-          </div>
-
-          <div class="exercise-meta">
-            <span>${workout.difficulty.join(", ")}</span>
-            <span>${workout.goal.join(" · ")}</span>
-          </div>
-        </div>
-      </article>
-    `;
-  });
-}
-
-
-function clearWorkout() {
-  goalSelect.value = "";
-  bodyAreaSelect.value = "";
-  difficultySelect.value = "";
-
-  errorMessage.textContent = "";
-
-  workoutList.innerHTML = `
-    <div class="empty-state">
-      <span class="empty-icon" aria-hidden="true">↗</span>
-      <div>
-        <strong>Your session starts here.</strong>
-        <p>Select your preferences above to generate a focused workout.</p>
-      </div>
-    </div>
-  `;
-}
-
-generateButton.addEventListener("click", generateWorkout);
-clearButton.addEventListener("click", clearWorkout);
+// Expose the logged catalog to index.js without running a second app.
+window.loggedWorkouts = workouts;
+window.exerciseImages = exerciseImages;
