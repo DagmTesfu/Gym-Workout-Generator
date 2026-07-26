@@ -671,10 +671,17 @@ button:focus-visible {
   font-weight: 760;
 }
 
-.details-button {
+.exercise-actions {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.details-button,
+.replace-button {
   width: 100%;
   min-height: 44px;
-  margin-top: 16px;
   padding: 0 16px;
   display: flex;
   justify-content: space-between;
@@ -687,12 +694,24 @@ button:focus-visible {
   letter-spacing: 0.08em;
 }
 
+.replace-button {
+  color: var(--dark);
+  background: #ebeae3;
+  border: 1px solid var(--line);
+}
+
+.replace-button:hover {
+  background: #deddd4;
+  transform: translateY(-1px);
+}
+
 .details-button:hover {
   background: #d5ff6c;
   transform: translateY(-1px);
 }
 
-.details-button span {
+.details-button span,
+.replace-button span {
   font-size: 1.1rem;
 }
 

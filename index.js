@@ -24,6 +24,7 @@ const exerciseDialogInstructions = document.getElementById("exerciseDialogInstru
 const apiExercisesByBodyPart = new Map();
 let localExerciseDetailsPromise;
 let displayedWorkouts = [];
+let replacementCandidates = [];
 
 const apiBodyPartBySelection = {
   Back: "back",
@@ -134,6 +135,132 @@ function getEquipmentCategories(equipmentText, exerciseName) {
   }
 
   return categories.length > 0 ? [...new Set(categories)] : ["Other"];
+}
+
+
+// Build one card so initial rendering and single-card replacement stay identical.
+function buildExerciseCard(workout, cardIndex) {
+  const safeName = escapeHtml(workout.name);
+  const safeImage = escapeHtml(workout.image);
+  const safeTarget = escapeHtml(workout.target.join(" / "));
+  const safeDifficulty = escapeHtml(workout.difficulty);
+  const safeEquipment = escapeHtml(workout.equipment.join(" / "));
+  const safeSource = escapeHtml(workout.source);
+  const mediaLabel = /\.gif(?:$|\?)/i.test(workout.image)
+    ? "Animated demo"
+    : "Exercise photo";
+
+  return `
+    <article
+      class="exercise-card"
+      data-workout-index="${cardIndex}"
+      style="animation-delay: ${cardIndex * 55}ms"
+    >
+      <div class="exercise-visual">
+        <img
+          src="${safeImage}"
+          alt="${safeName} exercise demonstration"
+          loading="${cardIndex < 3 ? "eager" : "lazy"}"
+          decoding="async"
+        >
+        <span class="exercise-number">${String(cardIndex + 1).padStart(2, "0")}</span>
+        <span class="exercise-media-label">${mediaLabel}</span>
+      </div>
+      <div class="exercise-content">
+        <span class="exercise-target">${safeTarget}</span>
+        <h3>${safeName}</h3>
+        <div class="exercise-prescription">
+          <div><strong>${escapeHtml(workout.sets)}</strong><span>Sets</span></div>
+          <div><strong>${escapeHtml(workout.reps)}</strong><span>Reps</span></div>
+        </div>
+        <div class="exercise-meta">
+          <span>${safeDifficulty} &middot; ${safeEquipment}</span>
+          <span>${safeSource}</span>
+        </div>
+        <div class="exercise-actions">
+          <button
+            class="replace-button"
+            type="button"
+            data-workout-index="${cardIndex}"
+            aria-label="Replace ${safeName}"
+          >
+            Replace
+            <span aria-hidden="true">&#8635;</span>
+          </button>
+          <button
+            class="details-button"
+            type="button"
+            data-workout-index="${cardIndex}"
+            aria-label="View details for ${safeName}"
+          >
+            Details
+            <span aria-hidden="true">&rarr;</span>
+          </button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+
+function buildCards(workouts, startIndex) {
+  return workouts.map(function (workout, index) {
+    return buildExerciseCard(workout, startIndex + index);
+  }).join("");
+}
+
+
+function getWorkoutBodyAreas(workout) {
+  const targetText = workout.target.join(" ");
+  return Object.keys(apiBodyPartBySelection).filter(function (bodyArea) {
+    return targetText.includes(bodyArea);
+  });
+}
+
+
+function replaceDisplayedWorkout(cardIndex) {
+  const currentWorkout = displayedWorkouts[cardIndex];
+  if (!currentWorkout) {
+    return;
+  }
+
+  const currentBodyAreas = getWorkoutBodyAreas(currentWorkout);
+  const displayedNames = new Set(displayedWorkouts.map(function (workout) {
+    return normalizeExerciseName(workout.name);
+  }));
+
+  // Keep the replacement relevant and prevent duplicate cards in the session.
+  const possibleReplacements = replacementCandidates.filter(function (candidate) {
+    const candidateBodyAreas = getWorkoutBodyAreas(candidate);
+    const hasSameBodyArea = currentBodyAreas.some(function (bodyArea) {
+      return candidateBodyAreas.includes(bodyArea);
+    });
+
+    return hasSameBodyArea &&
+      !displayedNames.has(normalizeExerciseName(candidate.name));
+  });
+
+  if (possibleReplacements.length === 0) {
+    errorMessage.textContent =
+      `No other ${currentBodyAreas[0] || "matching"} exercise is available for these filters.`;
+    return;
+  }
+
+  const replacement = possibleReplacements[
+    Math.floor(Math.random() * possibleReplacements.length)
+  ];
+  displayedWorkouts[cardIndex] = replacement;
+  errorMessage.textContent = "";
+
+  // Replace only the selected article; every other workout card remains untouched.
+  const currentCard = workoutList.querySelector(
+    `.exercise-card[data-workout-index="${cardIndex}"]`
+  );
+  if (currentCard) {
+    const cardTemplate = document.createElement("template");
+    cardTemplate.innerHTML = buildExerciseCard(replacement, cardIndex).trim();
+    currentCard.replaceWith(cardTemplate.content.firstElementChild);
+  }
 }
 
 
@@ -427,7 +554,7 @@ async function generateWorkout() {
     return {
       ...workout,
       reps: selectedGoal === "Strength" ? 8 : 12,
-      source: `${workout.source} · adapted to goal`
+      source: `${workout.source} - adapted to goal`
     };
   });
   const savedCandidates = [...exactSavedWorkouts, ...adaptableSavedWorkouts];
@@ -437,6 +564,13 @@ async function generateWorkout() {
     return Number(establishedMovementPattern.test(second.name)) -
       Number(establishedMovementPattern.test(first.name));
   });
+
+  // Keep every eligible, unique result available for card-level replacement.
+  replacementCandidates = [...new Map(
+    [...savedCandidates, ...apiCandidates].map(function (workout) {
+      return [normalizeExerciseName(workout.name), workout];
+    })
+  ).values()];
 
   const sessionSizeByDuration = { "20": 4, "30": 6, "45": 8, "60": 10 };
   const sessionSize = sessionSizeByDuration[selectedDuration];
@@ -472,6 +606,7 @@ async function generateWorkout() {
 
   if (totalMatches === 0) {
     displayedWorkouts = [];
+    replacementCandidates = [];
     workoutList.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon" aria-hidden="true">!</span>
@@ -482,53 +617,6 @@ async function generateWorkout() {
       </div>
     `;
     return;
-  }
-
-  function buildCards(workouts, startIndex) {
-    return workouts.map(function (workout, index) {
-      const cardIndex = startIndex + index;
-      const safeName = escapeHtml(workout.name);
-      const safeImage = escapeHtml(workout.image);
-      const mediaLabel = /\.gif(?:$|\?)/i.test(workout.image)
-        ? "Animated demo"
-        : "Exercise photo";
-
-      return `
-        <article class="exercise-card" style="animation-delay: ${cardIndex * 55}ms">
-          <div class="exercise-visual">
-            <img
-              src="${safeImage}"
-              alt="${safeName} exercise demonstration"
-              loading="${cardIndex < 3 ? "eager" : "lazy"}"
-              decoding="async"
-            >
-            <span class="exercise-number">${String(cardIndex + 1).padStart(2, "0")}</span>
-            <span class="exercise-media-label">${mediaLabel}</span>
-          </div>
-          <div class="exercise-content">
-            <span class="exercise-target">${workout.target.join(" / ")}</span>
-            <h3>${safeName}</h3>
-            <div class="exercise-prescription">
-              <div><strong>${workout.sets}</strong><span>Sets</span></div>
-              <div><strong>${workout.reps}</strong><span>Reps</span></div>
-            </div>
-            <div class="exercise-meta">
-              <span>${workout.difficulty} &middot; ${workout.equipment.join(" / ")}</span>
-              <span>${workout.source}</span>
-            </div>
-            <button
-              class="details-button"
-              type="button"
-              data-workout-index="${cardIndex}"
-              aria-label="View details for ${safeName}"
-            >
-              View details
-              <span aria-hidden="true">&rarr;</span>
-            </button>
-          </div>
-        </article>
-      `;
-    }).join("");
   }
 
   const savedSection = filteredSavedWorkouts.length > 0
@@ -610,6 +698,7 @@ function clearWorkout() {
   durationSelect.value = "";
   errorMessage.textContent = "";
   displayedWorkouts = [];
+  replacementCandidates = [];
 
   if (exerciseDialog.open) {
     exerciseDialog.close();
@@ -631,6 +720,12 @@ generateButton.addEventListener("click", generateWorkout);
 clearButton.addEventListener("click", clearWorkout);
 
 workoutList.addEventListener("click", function (event) {
+  const replaceButton = event.target.closest(".replace-button");
+  if (replaceButton) {
+    replaceDisplayedWorkout(Number(replaceButton.dataset.workoutIndex));
+    return;
+  }
+
   const detailsButton = event.target.closest(".details-button");
   if (!detailsButton) {
     return;
